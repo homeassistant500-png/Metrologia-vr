@@ -1,0 +1,1284 @@
+<title>Laboratorio Micrometro ad Arco</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- Font da Google Fonts: Barlow Condensed (titoli), IBM Plex Sans (testo), IBM Plex Mono (numeri e misure) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* =====================================================================
+   FOGLIO DI STILE (stessa impostazione del simulatore del calibro)
+   Layout: testata con righello, schede, contenuto max 1180 px;
+   simulatore a due colonne (comandi | disegni), una sola su schermi stretti.
+   ===================================================================== */
+
+/* --- Variabili colore e carattere (tema chiaro) --- */
+:root {
+  --bg: #f1f3f6;            /* sfondo pagina */
+  --panel: #ffffff;         /* sfondo pannelli */
+  --panel-2: #e8ecf1;       /* sfondo secondario */
+  --line: #d2d8e0;          /* bordi sottili */
+  --fg: #17202b;            /* testo principale */
+  --muted: #566273;         /* testo secondario */
+  --accent: #2448b5;        /* colore guida */
+  --accent-fg: #ffffff;     /* testo sul colore guida */
+  --ok: #1d7a47;            /* risposta corretta */
+  --ok-soft: #e0f1e7;
+  --err: #b42318;           /* risposta errata */
+  --err-soft: #fbe6e3;
+  /* Colori dello strumento (uguali nei due temi, come l'oggetto reale) */
+  --steel-hi: #f8fafc;      /* acciaio: riflesso */
+  --steel-mid: #d3d9e0;     /* acciaio: tono medio */
+  --steel-lo: #97a2af;      /* acciaio: ombra */
+  --steel-edge: #5c6875;    /* contorni */
+  --frame-hi: #7b8ea3;      /* arco verniciato: luce */
+  --frame-lo: #3d4b5b;      /* arco verniciato: ombra */
+  --plaque: #20272f;        /* piastra isolante */
+  --plaque-fg: #dfe5ec;     /* scritte sulla piastra */
+  --carbide: #6e7680;       /* riporti in metallo duro sulle facce di misura */
+  --engrave: #121820;       /* incisioni */
+  --cal-zero: #1f45c4;      /* evidenziazione lettura sulla bussola */
+  --cal-mark: #d27a00;      /* evidenziazione tamburo / nonio */
+  --cal-mark-soft: rgba(242, 153, 0, .28);
+  --lens-bg: #dfe4ea;       /* sfondo dei riquadri di dettaglio */
+  /* Caratteri */
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+  --radius: 6px;
+}
+/* --- Tema scuro automatico --- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1318; --panel: #161d25; --panel-2: #1e2731; --line: #2c3743;
+    --fg: #e5eaf0; --muted: #9ba8b6; --accent: #8aa5ff; --accent-fg: #0e1318;
+    --ok: #52c58a; --ok-soft: #13301f; --err: #ff8073; --err-soft: #3a1714;
+    --steel-hi: #e6ebf0; --steel-mid: #bfc8d2; --steel-lo: #87929f; --steel-edge: #46505c;
+    --lens-bg: #1b232c;
+    color-scheme: dark;
+  }
+}
+/* --- Tema scuro scelto esplicitamente --- */
+:root[data-theme="dark"] {
+  --bg: #0e1318; --panel: #161d25; --panel-2: #1e2731; --line: #2c3743;
+  --fg: #e5eaf0; --muted: #9ba8b6; --accent: #8aa5ff; --accent-fg: #0e1318;
+  --ok: #52c58a; --ok-soft: #13301f; --err: #ff8073; --err-soft: #3a1714;
+  --steel-hi: #e6ebf0; --steel-mid: #bfc8d2; --steel-lo: #87929f; --steel-edge: #46505c;
+  --lens-bg: #1b232c;
+  color-scheme: dark;
+}
+
+/* --- Impostazioni generali --- */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; line-height: 1.1; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.9rem; letter-spacing: .01em; }
+h3 { font-size: 1.3rem; letter-spacing: .02em; }
+p { margin: 0; max-width: 68ch; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- Testata --- */
+.top { background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1180px; margin: 0 auto; padding-block: 14px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: end; gap: 10px 16px; }
+.brand { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; }
+.brand h1 { font-size: 1.9rem; text-transform: uppercase; letter-spacing: .04em; }
+.brand small { font-family: var(--f-mono); font-size: .74rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+/* Righello: tratti ogni 0,5 mm (3 px) sotto e ogni 1 mm sopra, come la bussola del micrometro */
+.ruler { height: 12px; background:
+  repeating-linear-gradient(90deg, var(--fg) 0 1px, transparent 1px 30px) bottom left / 100% 12px no-repeat,
+  repeating-linear-gradient(90deg, var(--muted) 0 1px, transparent 1px 6px) bottom left / 100% 6px no-repeat,
+  repeating-linear-gradient(90deg, transparent 0 3px, var(--muted) 3px 4px, transparent 4px 6px) bottom left / 100% 3px no-repeat;
+  opacity: .55; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.tabs a { font-family: var(--f-display); font-size: 1.12rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; text-decoration: none; color: var(--muted); padding: 8px 10px 10px; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid transparent; border-bottom: none; }
+.tabs a:hover { color: var(--fg); background: var(--panel-2); }
+.tabs a[aria-current="page"] { color: var(--accent); background: var(--bg); border-color: var(--line); margin-bottom: -1px; }
+
+/* --- Contenuto --- */
+main { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.view { display: flex; flex-direction: column; gap: 26px; }
+.intro { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.lead { font-size: 1.05rem; color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* --- Disegni --- */
+.figure { width: 100%; overflow-x: auto; }
+svg.mic { display: block; width: 100%; height: auto; }
+svg text { font-family: var(--f-mono); }
+.lens-box { position: relative; height: clamp(220px, 30vw, 340px); background: var(--lens-bg); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.lens-box svg { width: 100%; height: 100%; display: block; }
+.lens-tag { position: absolute; left: 10px; top: 8px; font-family: var(--f-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel); padding: 2px 8px; border-radius: 3px; border: 1px solid var(--line); }
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.drag-x { cursor: ew-resize; touch-action: pan-y; }
+.drag-y { cursor: ns-resize; touch-action: pan-x; }
+
+/* --- Richiami numerati --- */
+.co circle { fill: var(--accent); }
+.co text { fill: var(--accent-fg); font-family: var(--f-display) !important; font-weight: 700; }
+.co line { stroke: var(--accent); stroke-width: .35; }
+.co.on circle { fill: var(--cal-mark); }
+.co.on line { stroke: var(--cal-mark); stroke-width: .6; }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
+.parts li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.parts li.on { border-color: var(--cal-mark); }
+.num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; }
+.parts b { display: block; font-weight: 600; }
+.parts span { color: var(--muted); font-size: .92rem; }
+
+/* --- Contenuti testuali --- */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.spec { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0; }
+.spec dt { font-family: var(--f-mono); font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+.spec dd { margin: 0; }
+.checklist { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.formulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.formula { background: var(--panel-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.formula code { font-family: var(--f-mono); font-size: 1.1rem; font-weight: 500; }
+.formula span { font-size: .88rem; color: var(--muted); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+td.mono { font-family: var(--f-mono); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; counter-increment: s; }
+.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; }
+
+/* --- Comandi --- */
+.sim { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.controls { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.seg button { flex: 1; border: none; background: var(--panel); padding: 8px 6px; cursor: pointer; font-family: var(--f-mono); font-size: .88rem; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: none; }
+.seg button:hover { background: var(--panel-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.seg button:disabled { opacity: .45; cursor: not-allowed; }
+.seg.grid { display: grid; grid-template-columns: 1fr 1fr; }
+.seg.grid button:nth-child(2n) { border-right: none; }
+.seg.grid button:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 8px 12px; cursor: pointer; font-weight: 500; }
+.btn:hover { background: var(--panel-2); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-row .btn { flex: 1; font-family: var(--f-mono); font-size: .86rem; padding: 8px 4px; }
+.num-in input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: var(--f-mono); font-size: 1.05rem; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.readout { background: var(--panel-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.readout .big { font-family: var(--f-mono); font-size: 2.2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.readout .big small { font-size: 1rem; color: var(--muted); font-weight: 400; }
+.readout .why { font-size: .9rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: .78rem; padding: 3px 8px; border-radius: 3px; background: var(--panel-2); white-space: nowrap; }
+.chip b { color: var(--muted); font-weight: 400; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* --- Esercitazione --- */
+.score { display: flex; flex-wrap: wrap; gap: 10px; }
+.score div { background: var(--panel-2); border-radius: var(--radius); padding: 8px 12px; min-width: 110px; }
+.score b { display: block; font-family: var(--f-mono); font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.score span { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: var(--f-mono); }
+.feedback { border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); }
+.feedback.ok { background: var(--ok-soft); border-color: var(--ok); }
+.feedback.err { background: var(--err-soft); border-color: var(--err); }
+.feedback.info { background: var(--panel-2); }
+.feedback strong { font-family: var(--f-display); font-size: 1.3rem; letter-spacing: .02em; }
+.feedback.ok strong { color: var(--ok); }
+.feedback.err strong { color: var(--err); }
+.feedback ol { margin: 0; padding-left: 20px; }
+.ok-t { color: var(--ok); font-weight: 600; }
+.err-t { color: var(--err); font-weight: 600; }
+
+@media (max-width: 860px) {
+  .sim { grid-template-columns: 1fr; }
+  .tabs { margin-left: 0; }
+  .tabs a { font-size: 1rem; padding: 7px 10px 9px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feedback { animation: fade .25s ease-out; }
+  @keyframes fade { from { transform: translateY(4px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+:fullscreen { background: var(--bg); padding: 20px; overflow: auto; }
+
+/* --- Pulsante del tema e scheda del pezzo da misurare --- */
+:root {
+  --mat-steel: #8fa1b5;     /* acciaio */
+  --mat-zinc: #d9c77e;      /* acciaio zincato giallo (viteria) */
+  --mat-bronze: #c6904f;    /* bronzo */
+  --mat-hss: #5d6773;       /* acciaio rapido (utensili) */
+  --mat-edge: #2f3842;      /* contorni dei pezzi */
+}
+.theme-btn { align-self: center; border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-family: var(--f-mono); font-size: .8rem; margin-bottom: 8px; white-space: nowrap; }
+.theme-btn:hover { border-color: var(--accent); }
+.pezzo { display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 14px; align-items: center; background: var(--panel-2); border-radius: var(--radius); padding: 12px; }
+.pezzo svg { width: 100%; height: auto; display: block; }
+.pezzo-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pezzo-txt > b { font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; letter-spacing: .02em; }
+.pezzo-txt .nota { font-size: .8rem; color: var(--muted); }
+@media (max-width: 480px) { .pezzo { grid-template-columns: 1fr; } }
+
+/* --- Logo del docente nella testata (su riquadro bianco: resta leggibile anche nel tema scuro) --- */
+.logo { height: 64px; width: auto; background: #ffffff; border-radius: 8px; padding: 3px; border: 1px solid var(--line); align-self: center; }
+.top-in { align-items: center; padding-block: 12px 0; }
+.brand { padding-bottom: 0; }
+.theme-btn { order: 2; margin-left: auto; margin-bottom: 0; }   /* pulsante del tema in alto a destra */
+.tabs { order: 3; flex-basis: 100%; margin-left: 0; }            /* schede su una riga propria, sotto il titolo */
+@media (max-width: 480px) { .logo { height: 48px; } }
+</style>
+
+<!-- =====================================================================
+     STRUTTURA DELLA PAGINA
+     ===================================================================== -->
+<header class="top">
+  <div class="top-in">
+    <img class="logo" src="data:image/webp;base64,UklGRhQkAABXRUJQVlA4IAgkAACwcgCdASrUALQAPj0ci0OiIaEUS44UIAPEsSI7kJ67n+S7jLm/tPNA5P7Pfe/kf2jdGPWXlhczfMl8w/9d6kf0d7Av6n/rj1r/Mb/Of8L/x/7B+//zNf9L/b+zb/ReoL/PP8Z1mvoAftL6aP/d/yPwl/1T/af9//Ufv/9CH84/tX/j9gD1yvMA9Wfqh/hPRR36/dv6/+yvoT4lfHXsd/d/ap/nPGN0B/s/Qr+OfX37h/d/23/vX7tfJH9m/o37Zfkz7Y/GT+a/LT4Avx7+Sf3r+qfsx/f/2+90vak7H/nP9N+UnwC+xP03/P/3f/Ff6j/D+k7/B+hH2B/z/5jfQB/Pv6V/lvzK/xn//+wf+l4NH4j/f+wD/Ov7P/xf8X+Vv0w/yH/R/yH+l/av2s/nf96/5f+J/yn/u/zH2Efyz+n/6r+6/5v/v/5X////D7rfX9+2H/t91H9if/ggLEtqLRon6wRoDYwMXgTE/b1yf/B773y6HmGzt/MrWaIZZYcOw1Av7WGo5+cx11uFWVQF6qE2Xh+t0ba3fGZVR8f0QV/wD//5N52ThlgAIbPwMiYKTUCvyT6AZpmki3wQ01juseqeP/McdJp93PI+PQMy+PC56vbSktF3i+l5imDGmBA5AxVBFeA2ZreIMt6fktuZ8cqVqtPPIFEj1Qtsi13wcm5/ysrP13OpBPmb5lWQqdUSOXebhswxtMPBVpp3/dUg7wwubabzaIjJVW7UBInahaxF6KkZuy9gquc8W7/19+dN31SUwdFrI6aeszVkzR291L1WYf6OmaG5fzrs0uHgm2wg7jCfXbZ526xMvmUcu9Aq+McUIQCc0u4f910tki0jsGhHkDRQvCNtfyq/JxNehGmR/xR/KNX18lda5u9iWjYefjiIlasd4Y++sTozLL8xUEYyMIs4EmD4GIq6+1aBo8EXL93IYJ8RLoPcYtGWsVhjiLEVuAa979416pz5GJDqEZ3fkfheOLmEtmi6FJhJrad1szEAOQbLfpnuj14qpI65avjycuMnrzoayEYl2A17uM/041qWeEN1IgANeXU3ko4G/NNUsTBmGZnw2Wr8nSqdpFGFiSHcXnTBliHFpVJ+ZgVXRv2lKBm4hLObmoXQ0Gt6j/YRcifVAi9O1WXdonxouV07eHR/CzYrg3pXwYuCW2pI9amgWzCHM3jOTy94t170/ilKI06M45aTT08NCK8ukIH6V9JXI8XyfyhLMAV4AAD+/oGb3+cvJGtkRUjKCQcq7s5QSrA2t9yIZZnrxRBOe1ssAMkzh/39L4EmAJgEqEPfhbS2UcXNZui4w/1YFgy272q77XpWfYbaAzbVZxcQpMR9TYkeTv+n/2vrgPSKdyVcYreCXzIMf7kY1ReeZS+XlGAkcRQp2iPu+++lY/lgeH2HwLnDiFDRtRn4T5j3qVXaf/6X9PXRL6fPvbAYnG/KH9AU0jSHgQKQoCh/n/wxOhARKcqW4bFZJSvXrg4PtBFb4UP0x3zwNwCayi1vdfD3+badSIr+T7qU/MqmacWAaSV8BbwSf2v8rKro+H/7Ui3iOPZqYlVaDatkkvDFzHBbW0lTyy65Xgrf3H9ib0IbLYmMHqpzeP97kHqm0RIf2adMGPa1NI2YPwG3k5v4L4bxu9c6IJI5GakYfjYSPl/02BxRflhHsgoSIbilXPHlk0iYzzLgd5CTXirU0U9eW64pF1zMojfWbAmVe1FedBt6O739kEUzk2zSsWpr9F1zXhpbvzLxYHvtqrex6c+S0fX/Sc75tDgkUtqDYhLP9eaZC+xmHLrqbkOhmEPmmywj9HR1T5fx6rfEO2lD7KIPJ8MC26beoUAulVF0HGBaSvMCVl4UnT23Q2GOFo+s45pyegSrkIdcywGHXpe2AXrsJaO3qrR9aumV83hjVaF9XVtsRxKuEwQgpHrHDQPGCY1Wx4ujXYkOEk/9c63tW9dA6pnNo6YyDWjkHmz/mC4hXCXQT4gEs708GlkPzpV1qqUO46Vp34dybv2MzYtgoty0hYic2b7eo67SgQjQqlufr8NZVH/8QXjYOSCU4v9iCwSPXmP9bCFA1R0xXVNfAp86B/XhauavATgCO14csr6Z+TsdSe9WxGtr45IGpLMG/M/xteU4jMH88d4yO4UjFIKVwH/Yugvm+UOx3zA6Pig9EwnvJvg3tqI6z4S6pAckL7eYG1/W5Jjl750+iEVh//U1o/tW9wN5n8kX04uuNhM1m+kR2Q0xf0Cfc0Iehf+gG+OKYZwwPFFhGNEoW990Ko/VEK6ZetfI7VwQ1v63G71PjWUyMrH0q69Et5rY/t2+V/YADhfAv4oYkckGnA/+9j0TV2zf3DBNTa7leY0xAgDmgdQSROuqNMvXEgPZBPYkNeTORAkv3v+uPxDh3JoYEG3YXFNRjckXdjAwqneVA0RCStIiD8pjtAwO82XWrFnGsA0ZlPgsiFg2QEBoVI8cvnWMnxfnfGV6XSd5zHiC935Gi5b7HPgfYhUZWnzRJIKRWhNgR5xw+xL/jGoL+G8Q6qakG+10wViMhY0ZHVGkwGIdDvkfuGRDu9uYId9gBkqWO9gxAy1C+9OP7UTdHNz9LzwdNHRLrGiuf3c9x9uMOzy/LQ0e7GFf0+rw3P2Qqk8/tz9l2HnJQt//GLHaJrfVTTpdIIqs0BPa+Z8CT9X5HsQCunXr5H5SLHyUOWcdrqqfqWe09kp1kW7ZLoys58bUEWltwpswR/x9lItefupqHHj4Nf9dc66IBbReScogorhtBDJTyR7Mzg/68ZBLJmzv8B3TUCuVGf1/1+7pfgPsQA833trLq75xXxOggQfWtL8kNbWABTy9h6O9OaN/CMzaLoO80c1VFaKDp/BprOJ2WVjMv2OUGH8LeHR/fT/b9pv0BJyQCz3VvfrzfgIPohFR7RR4gjyHd2ZVVGQhYCEeoA1/XfpOtWFr9x5arVtevoLRGLnuRLGinCiWiE3BS5spGdSSswWtu2Uti8elicFJ+a/pXjWnr3GpqC9cTFpgzJ3/Lhdq8xokQWKjdY8LhI4VSNbVjEMIbuvRvMc4OvUVNMakvaZrRKLdUcr09UYoB5b2kOGckAPN5NhS8Q7M5sIkXYSFF+lZvOy8WDvjAzyw3BFk0hi0fnaeVy8xoXuV1WJsHjmLyV693Segj54NXzFQ6zkT8btZxneiG+WVFZ27lhYZ+4q9KrWYgrqGtfrYC7q1/FEikeTqbaI/zCxzLfw+w4OwNcwaQ/itBAFCn/OjG97aEioHrpCPx922FNcSq3mcubm8CakFY7i6xk5WSe/9y6wIQ6Kj6yYmLCpHuc8dy2cg9waQCapFirmVwSOgIhoYB7aM2mfDlyqNLHntPy7zZRjNpNeTpcUJsD9Fm0FIU6yZJi1RC9ZABai9zsm2MWqZjM8QS9v2v9MksGEMujagFHrrV2WDpezFjbFrE/CAdDayh7IX5gSgvwqYuUyZVI/tsk9lYboa+Kl0INCCIDfp2lgTgNynYyXvqvT/m1Zmgl4ivpm2k84vkqYcqD+aoq018qT2dahmfyOSnVlWhcYYp3MEnq5rBbmoV/ANd+gByVozC/g1VBLLUwBhWhuW1G/DTp44n4n/LNhmd31hRYb+42oOA22BwjtlXmTxwQFxH4Zvlsey9lVBnk1gmDLeczBhMDsird4c/5GEe+R9lYbTGLSqKGQE8Qm6t5zWjrv4WDWtgKd4j7Y5zuMUIjnO2PClbLqNhqmcTOIxsqtwLvmy73+LuqWo0Nd/RNvPvUuUjIRr686MybVhHsrMWJi6HoN6FAYMuKd4I/Crde1a5EzQm91tGGtTBHnZi3YCO3dVecjwsza9GHxFIlFrnk7ygM2QpC4P8kACksOx8WVFLbpR6UFfu2YCtC3HJddoDW+V1TrH/7NNyAzVDEj94VfQJ3uWYLnu8x4YOh0wiK+IWF6/njSKAym0cPZShZtRAsCgUcDKEJpSrnDg4dOyvrpKhol+rxQ+jakotxMoTeFZnCO5/IcPmlVNWN44vagAIycuv9fASz9grdyHvmQVr7lvlHWg+gsHUuBD0lBKcjXE89VEqhQDNzEk8/sI+0UXUhFakGI93iO+bfDUz2IBBH0cmiu9YqUVCW1b75y0bBrU2OmQ4t6ndyyfXH761A6fGmb/qFgN0N7uySUWV45/ikxQBVDrZE8u3WmlIJrQjkNT4OpD+LWzbzGi1QxhvArZnhXJPO5n+8dP3NYxV46MjL5i2kU89fOYtIOucbnblcQTA5jUNsqAc2IKKT6/pnlmvTXrvg3UcQevwX2gx8qTJNbOJYfmQTRI0RFhnncNCnoZJ3AN4H13f4NPsE5nLvznQLz423B0ntdp/R3Seph3us9wxSLxyChYGf93DVcRdQXjPE8eoBvzIGtHRKXneNCsBPcWkjXrhoIJwyfCiFfdl9239qThvEfUBRn2p6HZqbKYwSgz3yU2Mjr2RkWk7GT0EA5MFJO4g/95UrkFCX5Xlzogl0QYcfYT+Wu4gZ7mHJ6P2f53AXPOC5oAeX849G01x6KLqdanGGdmdHFJYmDYxw4eVmFSnsvqsP7EbEbbXirg5pQwjcbdcGeJLL/j9EhBsCq4Rx4Wop7vYaykuMhgu2vZUde5wcTXzDF4PFzu+N3qfxvBhRg4jHBHix0ceSYoix8ho6TYi4PndwKWw7a/RZikH0IFT9M9Ao0m/Kl4mK9W5cyThhQZLp6Czb0ftVYUIUQNfUU9lxUwHzPqzNzRFjkCrnth/3NUmLLnPs3wBcD0zrfsWFEiFmuFRioBH3+b5E44uB3j2yUY0AeFqvGzN5mO3e+fNQrb4rGvzGR8XwTrB/TqpyC+k2NaHgAUXu0U/QszFbEhRzaeYcmEQu/VLrazVnJyovcMVkbeaPixNbVlZCRYXuTRtqGUTVu32NanWCcF4uT9CUxorN1oMH0gIYtrg0YyNin5P/tWF4hshKTX6ErbiiKVv6ojtTj3xmDkdhfXVnKHzRXxbTxeX4Gsrg+SLd4JLnec1Fyjgy6lbEuVr8gM7Nl/fFppd9NmZrEllw/7EQ/WxnAJq8qfdC8ehp1Sn5v+Z3ui21kiT/m99ytzCuYKy94XKBaaBhBTLZNg2Y3vvqxz6nOPtDwSvr/zi+9BiT3C5qfAUKjUGU8f9cP5F4+5UmINrCpNawe5tnTx0Hwyb53aVkQDLDa27/0OPtUhRqidx0j6wzFZJEE7QdzR6m3yeBNll1PC1WllSb/W7fywO5HvYPWMUsVHHVtf2duJ8FcD8uwNW/qZoLnJ72tN5aaJk1DZf/1Iy1ofe3JjIBancwvgcS60IIKMGkkBLU+XA4uLe5KCoM+cwDrjYsqywUrg7TxGGZH3PueBB4v3lMIAxjxfdV0GhuU2WFrXU0HXM0kZIjfraooF+qjYMQ0YjzIDSDVtGH/WUu3KN35OiOTrq9N6G8NOlrbt0Zw612PCyIdnZ4BQGtG5tLR4ZQ9o70+b/laR9Dl4c59YgjxysO/ybVgEDWL/STjlN6r55gOtasTKOYu0/qDaRPpAXqbSm0itbwO2oy/r7u7Issr7gbvwVm/qVHd+CLeqEa1zbbfjsdzS3GFwmtiulusPCTqIN0ZabZPhKi69EyET/E6yKjA/VGfchTwU89L7JL5IdHcsxYAmdZzIYrzJmQK3OZbdTaSy0zFseCzjo0jeBKP2x3BnI8ZjXOnXwbayQEqe6TBDRL+bcPH6dgn5sgLTTNCEKwWEbSUDc5qOQEqR28ryXQF2ynbI1wLjn2xirF0rQGzPoVu6HN/W6mbat988wDGegryiG80o/mduzjf4K7RIaLFGvW4kct6Wyahu3ULLcAUDi3yJoUwGM2KgyOfppyq1OzSiaECL1JeZwofrFM518VKkYwqwUkVsq5UVjsdZHyhgWAoG18qARBBg8Og9+H7its+EYws7Lmi1obhWN4eLz4tq/eXUEdgCrGOIr1DRlSCAi7e4IUf/yminLDCg7TYUfTXMSAUHdG9s60Pz3krLZgRbhQ9ylqfo/yfo7cRU1xTCCLIWK0nCV+of0VR6yYpic221Vi/zKG1td9LUspFdQkkWJ4Pq2AtdU6WXHuiaRZtEDYTJ15a3lv8ANa1nh6IKhv5/h4A/OdT/EDlVswm7VP8g2MuKO+D3k5wsPYzCPUtkOykjkzLYdHwBvd60jlVCARTfj2CgPgEaz/a9TfCkxb8xqkU7+QETv79gj3wJ1RKn4I3lXIE2e87iUMRoyG+KE8on6y6z4Sir2Ciqai9XN/BjvnkiFwYSuDfnaUqy24rke616EbCfkBAiU0K1Rqo2KGfsB0hCd9CkRFWHMZp/bSsCedK5w7Ob5gbrjHeEEE+3N236ybKGl5J0ps0ML8Nrj7bKXtziU6HHPfDFVX/Po5oA8QojKh4Xl8U89f1ji0AwdOvG91XhPO9zOTqnwpmzbTqcRGO4xvcJemkuV5mC/ELz0NBIo6rUBGDKo07sLqRkLS7RjTdz3P5s5uUq1sx4XLoi1DiOjYCsLAE32D50RQ09vve43QC3XGWOcNYUDOv4KYYuy2EcO4WVuatwaQjEU0UG0FJjA4JsVIQUo7iSsNo6YpPhyPfaKFoslJBwNc38yBwYAd3jY/Sse3ztS5XH8NQxRLvLnAmNfZL8XGkOb2OhresvqcvESy1zLLDzCqsjiHgxegwi80DWxc1nufU/Xz+YCbJZgd7kTnPfCufYFsyfZ7HDeApmTxriXguNUfjPxN15IlobX83O5uXrpyejtXT1XZ0FEx3Yuw4bKnh5Qgwh/GS8GEfnjEBebcMsund2vFWWxL9zr3yse1hwUdNHoh/zlc8Cp+fh8AiLN/pU1Bzr1gB+s0q5bmf3iO8+8FFJEFU8dqYhov0f+rQJrpvfTvLfbo2lqHZe+fg4OoAYoQd9tA395EI/C+rvFf7+cuGFF/H0szLsSq8yaVKVfsWGbH06JfTq3ED7Pe8UDAAdJ9GCeGUNin/cwDbZK8GVQ2l5Lvdf4v6h1RjKbG++qqT/EwE2onAudZVrCodv3DOtaTL+vyRUK9wUIxI0UtrMYc+sm0skq4tJniGgsABMm7+5frqRleV9I/xHQwSh2dUdRPjHCtPB7D+RkW9QjOmDkOfkUyERAeGZo9ytBOnAEyTanAiGr6qf+whAb90yKdd9g985xERtd936Id4U4TNzk0sBYTyyVoV9th1bl7u1wvGGBt/bzOWuSmeZ7/gsXjVVPS3vKJrNKcBZZV3zFnU9jn2o6k9IVV4tJL2NZ+XLlouJJYqWA75Nb7vNNHJvjx/aKW/lyAKRNnXg60rAn+rtjKxAKkG/3Tu/GmC6Cx/XigZRS2JPxMP3HfX27pdblJMIgv0WnEIiFtPM1arU++7xowYcyHvGgS1qTdVqwkMxzfDALY27yvwFGnnOC5MzEtWIXxUUIjVsVlca4R/LnP3uVbWFhUR6c8p7tK4U8voMGUKQwGuoJQcyqcdGUZOh1LtIya8anS6l7pj0i5uUeSyk+TGJHYbk5EfKxP9Yb9KL+KnigyVGB+vjiTwPcAI1rcb0jV9tMWdtNs3qRj22hIz0sS9eoSXsTiwmZyTB/oesGdzoKt+U6TtK0HxwlKy1UxD3LrrMIhojSrh0nbZZdxnuoUWMADylwJfwwB5cfcv+EJngebx2nRQvZ0eFV8dZGG/vAMJ9LKML8OrPqG+I+gFxDRM3a67RlCBQobyGHc0+ztbF4RBOd/vab7hzScPDtDwg7QX76WRS2EPFc5sFY3zW8VBlth3saRo3W6NLxXJ9Ve1LDfKAe1zwEeGVnfkXnscsZD3yD0CAMjg08xfLlQfgkiITIRF2Dhnm2hQ4jPvOkgXIUTeqvxGaZAHTThWG8y85zhHnk3PQOBbsnztE+jR+U/3z9Sl1+BFDQBGYmrItCv5ago+9ofi2HSDxYq+6YNGypNcfIiOIJtxFNNyP6TjCH7ceR0U74sfTXY6AGY6GHgyYE3lpeMiBYYhp4IFAI4h9mfuokPN6BkXxdcLDjy6kEblmm7u5zE5rm/vSbS1GIril9X+y78VXwREvnzUltJdgT9vDO9f6NcWRBgMOByITsSIWRLlOQ1lLL9Igf+oucNthyEvF1PRyOCQHZQjv9CMBfeRU73YwBygogI65knSUk7ogu5t49YxWX9SyJ5p6XixAdvGV94FXrCib59D7FyuSXImiunT/qbI2zC5DnlriLYyYCYy23HJSoUqXaBfKC4Y3NY75PwfocpCd6yiMNpwBQFhtSXhzvJI+Pv/ARSEO1TTg+cCxH87YcASc5LASO4V77OtqOhkbMw8SbGISJDVP3CASsh73Qg6iSAIleU5Vpb0H4/3U1X5IekikoxvM4VC4u9K+McndqKQZnnd1LPXl0gCMF8kmtuXZG0iyn78HMX3c+aeAFc37uQznRIz8K9XvlyF6a0laqRY1XyU+OCX2OIDZN9P5tOGE94pFzXbcLLDGJgNrbIvTTK+mKI10pyBIEW0ye1iAFyqotI76glm1AGX/SoKY2+gaL2lkkciiD/0x5NH1UrfPUT6xvwiHA4BNRDi27pAdvWcJ/1lelVLW9mLKwHPConmMAruTYSGQ4qeMXqgqafJaV67KS/0okv6BwZ+A9wpj7hqYVFakzTxWU6nvPN3+11J32/8BsoGO9IkPE5xVViwvAGvuIzdBKSeU6qENvqFjlbFqk5BwA5dmH1oWUCs4sf+Wf7DTQkPHV7cx/IfANWREtn+29CpzzEoryYhx9dHVQNNcLyA06Jgv4kP9dBGc2dvvPkH+Gpwrua7PBgHrZ0kRhPkhTQQBPFen09x9eDdBJCMP/K7OYTILoZlSgoH+4CpUSSVh1ldQoQUIu8eJ5rrAqGbq7kgxRRCS5qiKwPINMw7MpcjG5jSbYXX7ihse/eaFiljZvaVrx1pglcpJ31S1YGsySoVYEdUS7ptH08P30dvaJ8c/kNzZtKefm2c+Ur1OilxW2mgAS6EX1bl7hEOLMiypG17lHne6mDP/oooepa8XDpY5Y3ztiwyzq0oFgOSS4ywDqe0KDRjuBLl4729H4I440jZQfmgB6fXJ6P/bbdLG/yIBfgyB+1poBQpZ+fh+Ay3HErTnxubRR40LDQ8ha+mrTu9RwBwgFjF++Y8Ypjbk3nXS2vR7Ej+2FxJTodZo3vbRyEVkqIZ0YeBwCONrADeZuJAAHnVpmtpVfr+wHUUnZpp34QBT4kGZa4wm0WsTldul0iFCdpj2Rki8GR2uP4MgPhYq5QP4/tmiGk8WjXf9ISF/QwXtm/YINfDGekYH7/OtJPFyhn7eRF1cEpv+r0k9XsaN1hbtuDqcxY/nOhQohX4VpnZlzBjQYXvpykSEXXseKDpakdvXa0uxKD/Svwyt+5+1pkrxg8H6j4S7h6/r8/IA+6I6WqXMmvsR/fi3nMvMU+teRgVyGrL5fgVYPV+4xNh+hbrfDYsVYO375EjbUPrnBn2pF6pK9A4BwMAZgVMGo2R4v6lmGja/bdge6QGetwU40hrDoVm8tPpD67Vb8yLaLHvt/AZfO2tnEqfa3/CDbjzqT2Ya0BxBVyfB/p8dhp/5HLjBiWIOR6LvBr1Xm/lfmlGnyFu9JaosC7vVjuhvW8UiAf+YRKuLID38ZyrOp4CYYiCdFYHdKcKLxVpcAY5WQ+6EgQMBNiRgfa51uMGcgJ2xDuGYgRf5JTgdJicezp1M/hcuaSa1vzbezxlPLDL5ote8kUJO6YA69kr7dP/MH0bO4VE4ag4hl7JwwSxRmG3U53+9BYIVoKGzkwJQgFcv5B/wTmYuv5SnTry/cYQDQH0zp0O3VuL3OtM5FJRErb9KBMp+RHeesLneQd0bCCHbd7FxIN/f6hkdKdBzPPAfBpY6cCclHfFX0NpFBUUCAoActPUF7V+704nGbZOHqIIrSp5Y16Zjp/Cj2k+MeMzKdYtwhdyH2q4+UQ6siQkZ8609p52qGtba16oLOrAkTC4k94IulAi/SCTdit9mJQM2u8UMGkVI695luTnrbDoDv47XqDl1sOH8bar+ZUzJZlLHrkmEuh6bMtOZT1T8AXjM8hj3strWNLgrHp5sHGbB5ZYGjGLBLQH45iTSLp9ZpDoID31Eo53JDnrcMfLdayxYhdM5Kf7/SoyMYoinID+hcuqblL4Jneb/36ex2RPkYRLX8myf3rlXzx+OKS/paXjw0iztC+F+ynytMTTHDziSMIoCux3oWbrYBEHfSSc4V7ykKI2vR9cDZiiMXTjtU4yc/efSuciRrO0q/kUdUlRCjckrgSgnwV2FHRFwYeUZZHIzrHXL8m+hn7EDiHQbjZBfXLgnIWgFJ+U6CdIhZdPXGKY9cKlYzUyQ1cUOUKEntbNhMnoj56Hd0Hiil3H9DtG52NDgtTEQQobQg8hDtsWgNb49omU3NKJNzKE49p8xxK9mvoDUh0N67LgftWxG4pyPFgV18ThL/x8j+bB/jNL3scuU1GHueC7U91A28c60dyQZSNvPBwwpYOgTRam+ZugK8XPiir2LIJrRLTlx2mOgQ2oFFDvC/byhNg8qw1gfPB6jFVDeLrHe4jx7qvMGHDrwDW/HJ7dJ/ktppO/NF3fudFmv8iIlGBUZqB3PSap2qTJ7tiPVHuRW9bp2uavjPHFCfSVmzoGlmIAAqiF0yNeWAGR62CVYmuaIr9hoEo4sZgWRNEDVrAkR4Jf/feVRYoxrwtivdR0HEfncpE0GHo/G3aiz9lQy6htqa6nBGhXS2dztQk/vFdm0IMIjUeKlsUR1L4nmhvtWt9v+XrCUEQMpKjKcFjAaF4EnFQE5gbDFmRyY7FjWoXDUPieSFoud+JwBdI9JpTusFuE6eBEHjEEh+2AqoNwUJ+LX9gymZ6j38YWF7qUfBNFQQyEf4dUyZ8Li2Aq0fXJwd6z0xCRRLcHdjlwKmYI/c2UKI+GCEyUkLn4PLlQiD1HfMCRBtvxH9kxJefBevU1O+734HIeWN0p98oCcF7L9unXGjTFd8wRgi539Br9vYT2wOAAHotUdqFNf0IoldpjLIy/Dqg8LBUhuFHSC5C8PUvcJetye8MYI1b6a6h2WKqxljFGomYeorhlrTXdIGL69TyXCn4Aq3+Vx+BQSq0mBZUIDFGKtw8ZB5jBoMyBRLNR+Q61aMnNHcERpsTj+cm89tSmSeiGKsqoWBP5Pbhz7oYxBSf7xy/mjYMngWfBM2go3UONgwfKsFzm7AAAAABZ3a9cBkJllSZ4AwiGsm51wmhV3P87GBqayV//Z1vA6AajJjQhqfIpnBLOB9wvXQHp9nqjWLc6k5ntslxOyvflL8Kv5xDRUmV92iGkDvxECHQKQDVqmzhB01QieYTObwAg4qGmEJhLlD2doTHB01qeupy4ZeYXnKmiK3hCpQ4V+f32Ulcj/gYlqN7qiV8pDa7833o6Emrpz3t6ABqcXOPjLMhpYJNDdV6uOVPm1GZ3agpQJQaTvJH5FYg/4DL7f8LXXE7NjxnRIMT2iU/lJ5aDkSZIrvukRF32yus1U2lNDODvM6QULseiyN/uB9FDB0cY8jy1UAjQd21WuHxGfx5avRWhH6iQTk0bOE3lVOTlydFIAOYoMSRLmfoTavrn1MT7jCHTKmk22QakYtCnwFa0NnS79DDdd0BApru1FnMcLrF680gOqNw7SHmF4WlofxxfHSe7lvuukyRC6UgmEMxyAYyZJeKIkcjp03GQl+581mBzYaoA0/blF6CGL0xSOM8IDIJBdHxEfTspuyDkkSID6ArnhGdGa0TIx2jght478izaNa9Mecw/nkb8gh2xyzxdbc7O9g5EABQy6X7k/TaHS5v2OF5CEA1i8s2tJfJBoCk3JB2TJPd2vRpEQ5cj/fHNVI57hFCE2JkmDyujJeMEsWeNx5P7fglqmh8fQHpL94BtTCG7UkPycSZJrY+DSqNTfSLJMh2pJ+JCHE7T4jryqO3Fj12Vesi4uGbfcTImdvJbQgcLtPnI1GcNTxW9TWzaqPfnx75xIDZkms0gAaXB2cNBRhZzPed2OXEQd9LugFORN4EPluYyZKJ+uhwp2Up1MX4vpdnRqVrqH3VUQOtSwbSYmntokLOPeQxRhhKb1yF39t47SSh5v+PjX8N4BO/D9hqZdhxlkvw5i4CEThata96SsKFSehR8WGi918CqkHj6PY6qSVlFi+QpIy19sXV1u6/vJQPh+RST1pjuqUIo1vQ7PhzYMfUQFW/kCpOc+9kuJ03FvMfFAuzNGmsmf7fuaA9U/u0s6N6RpuWTb2JQ5aKEFKSyaRH8uoQ7joAQXEAkieWmAACkfQABEJAAAAAAAAA==" alt="Logo Prof. Giuseppe Fumuso – Meccatronica" width="75" height="64">
+    <div class="brand">
+      <h1>Micrometro ad arco</h1>
+      <small>Laboratorio di metrologia · Meccatronica</small>
+    </div>
+    <nav class="tabs" aria-label="Sezioni">
+      <a href="#strumento" data-view="strumento">Lo strumento</a>
+      <a href="#principio" data-view="principio">Il principio</a>
+      <a href="#simulatore" data-view="simulatore">Simulatore</a>
+      <a href="#esercizio" data-view="esercizio">Esercitazione</a>
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Scuro</button>
+  </div>
+  <div class="ruler" aria-hidden="true"></div>
+</header>
+
+<main>
+
+<!-- ===================== VISTA 1: LO STRUMENTO ===================== -->
+<section class="view" id="view-strumento">
+  <div class="intro">
+    <span class="eyebrow">Strumento di misura a vite micrometrica</span>
+    <h2>Il micrometro per esterni (ad arco)</h2>
+    <p class="lead">Il micrometro trasforma la rotazione del tamburo nell'avanzamento dell'asta mobile tramite una vite di precisione. Ha un campo di misura di 25 mm e una risoluzione di 0,01 mm, o 0,001 mm con il nonio sulla bussola. Passa il mouse sulle voci per evidenziare la parte nel disegno.</p>
+  </div>
+  <div class="panel">
+    <div class="figure"><svg class="mic" id="svg-parts" role="img" aria-label="Disegno del micrometro con le parti numerate"></svg></div>
+    <ul class="parts" id="parts-list"></ul>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Caratteristiche dello strumento</h3>
+      <dl class="spec">
+        <dt>Campo di misura</dt><dd>25 mm per ogni strumento: 0–25, 25–50, 50–75 mm e così via. Il valore iniziale del campo si somma sempre alla lettura.</dd>
+        <dt>Passo della vite</dt><dd>p = 0,5 mm: un giro completo del tamburo sposta l'asta di mezzo millimetro.</dd>
+        <dt>Tamburo</dt><dd>50 divisioni: ogni divisione vale 0,5 / 50 = 0,01 mm.</dd>
+        <dt>Bussola</dt><dd>Linea di fede orizzontale; tratti dei mm sopra la linea, tratti dei mezzi mm sotto.</dd>
+        <dt>Risoluzione</dt><dd>0,01 mm (centesimale); 0,001 mm con nonio a 10 divisioni sulla bussola (millesimale).</dd>
+        <dt>Forza di misura</dt><dd>Resa costante dal cricchetto a frizione, che slitta quando i contatti toccano il pezzo.</dd>
+        <dt>Facce di misura</dt><dd>Incudine e asta con riporti in metallo duro, piane e parallele.</dd>
+      </dl>
+    </div>
+    <div class="panel">
+      <h3>Buone pratiche di misura</h3>
+      <ul class="checklist">
+        <li>Pulisci le facce di misura e il pezzo con un panno o un foglio di carta.</li>
+        <li>Verifica lo zero: per lo 0–25 chiudi i contatti; per i campi superiori usa l'asta di riscontro della lunghezza nominale.</li>
+        <li>Avvicina l'asta con il tamburo, poi chiudi solo con il cricchetto (2–3 scatti).</li>
+        <li>Impugna lo strumento dalle piastre isolanti: il calore della mano dilata l'arco.</li>
+        <li>Leggi con l'occhio perpendicolare alla linea di fede per evitare l'errore di parallasse.</li>
+        <li>Controlla sempre se il tratto del mezzo millimetro è scoperto.</li>
+        <li>A fine uso lascia le facce leggermente aperte e non bloccare l'asta.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 2: IL PRINCIPIO ===================== -->
+<section class="view" id="view-principio" hidden>
+  <div class="intro">
+    <span class="eyebrow">Principio di funzionamento</span>
+    <h2>Vite micrometrica e nonio</h2>
+    <p class="lead">Una rotazione del tamburo di un angolo α sposta l'asta di p · α / 360°. Dividendo la circonferenza del tamburo in 50 parti, uno spostamento di 0,5 mm diventa una rotazione ampia e facile da leggere: ogni divisione vale 0,01 mm.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>La vite micrometrica</h3>
+      <div class="lens-box" style="height:260px"><svg id="svg-vite" role="img" aria-label="Bussola e tamburo durante la rotazione" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="field">
+        <label class="label" for="pr-ang">Rotazione del tamburo [divisioni]</label>
+        <input type="range" id="pr-ang" min="0" max="200" step="1" value="62">
+      </div>
+      <p id="pr-ang-text"></p>
+    </div>
+    <div class="panel">
+      <h3>Il nonio millesimale</h3>
+      <div class="lens-box" style="height:260px"><svg id="svg-pr-nonio" role="img" aria-label="Nonio della bussola e tamburo" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="field">
+        <label class="label" for="pr-k">Millesimi oltre la divisione del tamburo (k)</label>
+        <input type="range" id="pr-k" min="0" max="9" step="1" value="4">
+      </div>
+      <p id="pr-k-text"></p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Formule</h3>
+    <div class="formulas">
+      <div class="formula"><code>s = p · α / 360°</code><span>Spostamento dell'asta [mm] per una rotazione α [°]; p = passo della vite = 0,5 mm</span></div>
+      <div class="formula"><code>r = p / n<sub>t</sub> = 0,5 / 50</code><span>Risoluzione del tamburo: 0,01 mm per divisione (n<sub>t</sub> = divisioni del tamburo)</span></div>
+      <div class="formula"><code>r<sub>n</sub> = r / n<sub>n</sub> = 0,01 / 10</code><span>Risoluzione con nonio: 0,001 mm (n<sub>n</sub> = 10 divisioni del nonio, ampie come 9 del tamburo)</span></div>
+      <div class="formula"><code>M = A + I + 0,5·h + T·0,01 + k·0,001</code><span>A = inizio campo, I = mm interi, h = 1 se il mezzo mm è scoperto, T = tamburo, k = nonio [mm]</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Micrometro centesimale e millesimale</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tipo</th><th>p [mm]</th><th>Tamburo</th><th>Nonio</th><th>Risoluzione</th></tr></thead>
+        <tbody>
+          <tr><td>Centesimale</td><td class="mono">0,5</td><td class="mono">50 div.</td><td>—</td><td class="mono">0,01 mm</td></tr>
+          <tr><td>Millesimale</td><td class="mono">0,5</td><td class="mono">50 div.</td><td class="mono">10 div. = 9 tamb.</td><td class="mono">0,001 mm</td></tr>
+        </tbody>
+      </table></div>
+      <p>Nel micrometro millesimale le linee del nonio sono incise sulla bussola in un settore diverso da quello della scala principale: per leggerle si ruota leggermente lo strumento. Nel simulatore compaiono nel secondo riquadro di dettaglio.</p>
+    </div>
+    <div class="panel">
+      <h3>Errori di lettura più frequenti</h3>
+      <ul class="checklist">
+        <li>Dimenticare il mezzo millimetro scoperto sotto la linea di fede (errore di 0,5 mm).</li>
+        <li>Dimenticare l'inizio del campo nei micrometri 25–50 e 50–75 (errore di 25 o 50 mm).</li>
+        <li>Leggere il tamburo sul tratto sopra la linea di fede invece che su quello allineato o subito sotto.</li>
+        <li>Contare un tratto dei mm non ancora del tutto scoperto dal bordo del tamburo.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Procedura di lettura · esempio con micrometro 25–50 mm centesimale</h3>
+    <div class="lens-box" style="height:300px"><svg id="svg-example" role="img" aria-label="Esempio di lettura 32,77 mm" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="legend"><span><i style="background:var(--cal-zero)"></i>Lettura sulla bussola</span><span><i style="background:var(--cal-mark)"></i>Lettura sul tamburo</span></div>
+    <ol class="steps">
+      <li><div><b>Inizio del campo.</b> Il micrometro è un 25–50 mm: A = 25 mm.</div></li>
+      <li><div><b>Millimetri interi.</b> Ultimo tratto scoperto sopra la linea di fede: I = 7 mm.</div></li>
+      <li><div><b>Mezzo millimetro.</b> Sotto la linea, dopo il tratto dei 7 mm, è scoperto il tratto del mezzo millimetro: si aggiungono 0,5 mm.</div></li>
+      <li><div><b>Tamburo.</b> La divisione allineata con la linea di fede è la 27: 27 · 0,01 = 0,27 mm.</div></li>
+      <li><div><b>Somma.</b> M = 25 + 7 + 0,5 + 0,27 = 32,77 mm.</div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== VISTA 3: SIMULATORE ===================== -->
+<section class="view" id="view-simulatore" hidden>
+  <div class="intro">
+    <span class="eyebrow">Spiegazione alla lavagna</span>
+    <h2>Simulatore</h2>
+    <p class="lead">Imposta la misura con i pulsanti o il cursore. Puoi anche trascinare orizzontalmente il micrometro o trascinare in verticale il tamburo nel riquadro di dettaglio per farlo ruotare.</p>
+  </div>
+  <div class="sim" id="sim-root">
+    <div class="panel controls">
+      <div class="field"><span class="label">Campo di misura</span><div class="seg" id="sim-a" role="group" aria-label="Campo di misura"></div></div>
+      <div class="field"><span class="label">Risoluzione</span><div class="seg" id="sim-u" role="group" aria-label="Risoluzione"></div></div>
+      <div class="field">
+        <label class="label" for="sim-input">Misura [mm]</label>
+        <div class="num-in"><input id="sim-input" type="text" inputmode="decimal" autocomplete="off"></div>
+        <input type="range" id="sim-range" min="0" max="2500" step="1" aria-label="Posizione dell'asta">
+        <div class="btn-row">
+          <button class="btn" id="sim-mg" type="button">−1 giro</button>
+          <button class="btn" id="sim-md" type="button">−0,01</button>
+          <button class="btn" id="sim-pd" type="button">+0,01</button>
+          <button class="btn" id="sim-pg" type="button">+1 giro</button>
+        </div>
+        <div class="btn-row" id="sim-row-mill">
+          <button class="btn" id="sim-mm" type="button">−0,001</button>
+          <button class="btn" id="sim-pm" type="button">+0,001</button>
+        </div>
+        <button class="btn" id="sim-rand" type="button">Misura casuale</button>
+      </div>
+      <label class="check"><input type="checkbox" id="sim-show" checked> Visualizza la misura</label>
+      <label class="check"><input type="checkbox" id="sim-hl" checked> Evidenzia le letture</label>
+      <button class="btn" id="sim-fs" type="button">Schermo intero</button>
+    </div>
+    <div class="panel">
+      <div class="readout" id="sim-readout"></div>
+      <div class="chips" id="sim-chips"></div>
+      <div class="figure"><svg class="mic drag-x" id="sim-over" role="img" aria-label="Micrometro completo: trascina per spostare l'asta"></svg></div>
+      <div class="duo">
+        <div class="lens-box"><svg class="drag-y" id="sim-det" role="img" aria-label="Dettaglio bussola e tamburo" preserveAspectRatio="xMidYMid meet"></svg><span class="lens-tag">Bussola e tamburo</span></div>
+        <div class="lens-box" id="sim-nbox"><svg class="drag-y" id="sim-non" role="img" aria-label="Dettaglio del nonio" preserveAspectRatio="xMidYMid meet"></svg><span class="lens-tag">Nonio (vista ruotata)</span></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--cal-zero)"></i>Lettura sulla bussola</span><span><i style="background:var(--cal-mark)"></i>Tamburo e nonio</span><span>Tastiera: ← → 1 divisione, Maiusc + ← → 1 giro</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 4: ESERCITAZIONE ===================== -->
+<section class="view" id="view-esercizio" hidden>
+  <div class="intro">
+    <span class="eyebrow">Esercitazione di lettura</span>
+    <h2>Leggi la misura</h2>
+    <p class="lead">Il programma genera una misura casuale. Leggila sul micrometro, scrivila in millimetri e verifica. Dopo la verifica compaiono la soluzione commentata e il tipo di errore.</p>
+  </div>
+  <div class="sim">
+    <div class="panel controls">
+      <div class="field"><span class="label">Livello</span><div class="seg grid" id="ex-level" role="group" aria-label="Livello"></div></div>
+      <p class="lead" id="ex-level-desc" style="font-size:.9rem"></p>
+      <label class="check"><input type="checkbox" id="ex-pezzi" checked> Misura su pezzi meccanici</label>
+      <div class="field"><span class="label">Campo (personalizzato)</span><div class="seg" id="ex-a" role="group" aria-label="Campo personalizzato"></div></div>
+      <div class="field"><span class="label">Risoluzione (personalizzato)</span><div class="seg" id="ex-u" role="group" aria-label="Risoluzione personalizzata"></div></div>
+      <form class="field" id="ex-form" autocomplete="off">
+        <label class="label" for="ex-answer">La tua lettura [mm]</label>
+        <div class="num-in"><input id="ex-answer" type="text" inputmode="decimal" placeholder="es. 32,77"></div>
+        <div class="btn-row">
+          <button class="btn primary" type="submit" id="ex-check">Verifica</button>
+          <button class="btn" type="button" id="ex-hint">Suggerimento</button>
+        </div>
+        <button class="btn" type="button" id="ex-new">Nuova misura</button>
+      </form>
+    </div>
+    <div class="panel">
+      <div class="score" id="ex-score"></div>
+      <div class="chips" id="ex-chips"></div>
+      <div class="pezzo" id="ex-pezzo" hidden></div>
+      <div class="figure"><svg class="mic" id="ex-over" role="img" aria-label="Micrometro dell'esercizio"></svg></div>
+      <div class="duo">
+        <div class="lens-box"><svg id="ex-det" role="img" aria-label="Dettaglio bussola e tamburo" preserveAspectRatio="xMidYMid meet"></svg><span class="lens-tag">Bussola e tamburo</span></div>
+        <div class="lens-box" id="ex-nbox"><svg id="ex-non" role="img" aria-label="Dettaglio del nonio" preserveAspectRatio="xMidYMid meet"></svg><span class="lens-tag">Nonio (vista ruotata)</span></div>
+      </div>
+      <div id="ex-feedback"></div>
+      <div class="table-wrap"><table id="ex-hist"></table></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+/* =====================================================================
+   PROGRAMMA – SIMULATORE DI MICROMETRO PER ESTERNI AD ARCO
+   Unità del disegno: mm. Asse x verso destra, asse y verso il basso.
+   L'asse di misura è la retta y = 0 (coincide con la linea di fede).
+   La misura è memorizzata come intero N di passi di risoluzione:
+     U = 100  → passo 0,01 mm  (centesimale)
+     U = 1000 → passo 0,001 mm (millesimale)
+   s = N / U è la lettura sulla bussola (0–25 mm); M = A + s è la misura.
+   ===================================================================== */
+
+// ---------- COSTANTI GEOMETRICHE ----------
+const CAMPI = [0, 25, 50];               // inizi dei campi di misura disponibili [mm]
+const RISOL = [100, 1000];               // U: passi per mm (0,01 e 0,001 mm)
+const NOME_U = { 100: "0,01 mm", 1000: "0,001 mm" };   // etichette delle risoluzioni
+const CORSA = 25;                        // corsa dell'asta [mm]
+const P = 0.5;                           // passo della vite [mm]
+const NT = 50;                           // divisioni del tamburo
+const GR_DIV = 360 / NT;                 // angolo di una divisione del tamburo = 7,2°
+const GR_NON = GR_DIV * 9 / 10;          // angolo di una divisione del nonio = 6,48° (10 div. = 9 del tamburo)
+const X0 = 44;                           // ascissa dello zero della scala della bussola
+const RG = 6.2;                          // raggio "proiettato" delle graduazioni circonferenziali [mm]
+const RB = 6;                            // raggio della bussola [mm]
+const RT = 8.5;                          // raggio del tamburo [mm]
+const LT = 26;                           // lunghezza del tamburo [mm]
+const RAD = Math.PI / 180;               // conversione gradi → radianti
+
+// ---------- FUNZIONI DI CALCOLO ----------
+
+// Scompone N nelle letture parziali: mm interi, mezzo mm, divisione del tamburo, nonio
+function scomponi(N, U) {
+  const f = U / 100;                     // passi per ogni centesimo (1 o 10)
+  const I = Math.floor(N / U);           // millimetri interi sulla bussola
+  let r = N - I * U;                     // resto oltre i mm interi (in passi)
+  const h = r >= U / 2 ? 1 : 0;          // 1 se è scoperto il tratto del mezzo mm
+  r -= h * U / 2;                        // toglie il mezzo mm
+  const T = Math.floor(r / f);           // divisione del tamburo (centesimi)
+  const k = r - T * f;                   // millesimi letti sul nonio (0 nel centesimale)
+  return { I, h, T, k };                 // tutte le parti della lettura
+}
+
+// Cifre decimali con cui scrivere la misura
+function decimali(U) {
+  return U === 100 ? 2 : 3;              // centesimale → 2, millesimale → 3
+}
+
+// Numero in stile italiano con le cifre decimali richieste
+function fmt(x, d) {
+  return x.toFixed(d).replace(".", ",");   // arrotonda e usa la virgola
+}
+
+// Converte il testo dell'utente in numero (accetta virgola, punto, "mm"); NaN se non valido
+function leggiNumero(txt) {
+  const p = String(txt).trim().replace(/mm$/i, "").trim().replace(",", ".");   // pulizia del testo
+  if (!/^\d+(\.\d+)?$/.test(p)) return NaN;    // solo cifre ed eventuale parte decimale
+  return parseFloat(p);                  // conversione
+}
+
+const limita = (v, a, b) => Math.max(a, Math.min(b, v));            // limita v tra a e b
+const casuale = (a, b) => a + Math.floor(Math.random() * (b - a + 1));   // intero casuale tra a e b
+const $ = (id) => document.getElementById(id);                     // cerca un elemento per id
+
+// ---------- DISEGNO DEL MICROMETRO ----------
+// o = { A, U, N, uid, vista, zero, coinc, richiami }
+//   A      : inizio del campo di misura [mm]
+//   vista  : "scala" (bussola con mm e mezzi mm) oppure "nonio" (bussola ruotata con il nonio)
+//   zero   : evidenzia la lettura sulla bussola
+//   coinc  : evidenzia la divisione del tamburo (e del nonio)
+function disegnaMicrometro(o) {
+  const s = o.N / o.U;                   // lettura sulla bussola [mm]
+  const e = X0 + s;                      // ascissa del bordo del tamburo
+  const L = scomponi(o.N, o.U);          // letture parziali
+  const t = L.T + L.k / (o.U / 100);     // posizione angolare del tamburo in divisioni (anche frazionarie)
+  const A = o.A;                         // inizio del campo
+  const xi = -A - 3;                     // lato interno della testa sinistra dell'arco
+  const Di = 22 + 0.4 * A;               // profondità interna dell'arco (cresce con il campo)
+  const Do = Di + 12;                    // profondità esterna dell'arco
+  const u = o.uid;                       // prefisso degli id dei gradienti
+  const bordo = `stroke="var(--steel-edge)" stroke-width="1" vector-effect="non-scaling-stroke"`;   // contorno sottile
+  let h = "";                            // codice SVG
+
+  // --- Gradienti: acciaio cilindrico (luce in alto) e arco verniciato ---
+  h += `<defs>
+    <linearGradient id="${u}-cil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--steel-mid)"/><stop offset=".3" stop-color="var(--steel-hi)"/><stop offset=".75" stop-color="var(--steel-mid)"/><stop offset="1" stop-color="var(--steel-lo)"/>
+    </linearGradient>
+    <linearGradient id="${u}-arco" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--frame-hi)"/><stop offset="1" stop-color="var(--frame-lo)"/>
+    </linearGradient>
+  </defs>`;
+
+  if (o.vista === "scala") {
+    // --- Asta mobile (vite): dalla faccia di misura (x = s) fino dentro la testa destra ---
+    h += `<rect x="${s}" y="-3.2" width="${40 - s}" height="6.4" fill="url(#${u}-cil)" ${bordo}/>`;
+    h += `<rect x="${s}" y="-3.2" width="0.8" height="6.4" fill="var(--carbide)"/>`;      // riporto in metallo duro
+    // --- Incudine: faccia di misura fissa a x = −A ---
+    h += `<rect x="${-A - 10}" y="-3.2" width="10" height="6.4" fill="url(#${u}-cil)" ${bordo}/>`;
+    h += `<rect x="${-A - 0.8}" y="-3.2" width="0.8" height="6.4" fill="var(--carbide)"/>`;   // riporto in metallo duro
+    // --- Arco a forma di C: testa sinistra, fondo arrotondato, testa destra ---
+    h += `<path d="M ${-A - 14} -7 H ${xi} V 9 V ${Di - 6} Q ${xi} ${Di} ${xi + 6} ${Di} H 21 Q 27 ${Di} 27 ${Di - 6} V -7 H 40 V ${Do - 10} Q 40 ${Do} 30 ${Do} H ${-A - 4} Q ${-A - 14} ${Do} ${-A - 14} ${Do - 10} Z" fill="url(#${u}-arco)" ${bordo}/>`;
+    // --- Piastra isolante termica sul fondo dell'arco ---
+    h += `<rect x="${xi + 3}" y="${Di + 2}" width="${27 - xi - 6}" height="${Do - Di - 4}" rx="3" fill="var(--plaque)"/>`;
+    h += `<text x="${(xi + 27) / 2}" y="${Di + 5.5}" font-size="2.3" text-anchor="middle" fill="var(--plaque-fg)">${A}–${A + 25} mm</text>`;        // campo inciso (prima riga)
+    h += `<text x="${(xi + 27) / 2}" y="${Di + 8.6}" font-size="2.3" text-anchor="middle" fill="var(--plaque-fg)">${NOME_U[o.U]}</text>`;           // risoluzione incisa (seconda riga)
+    // --- Leva di bloccaggio sulla testa destra ---
+    h += `<rect x="31" y="-11" width="5" height="4.2" rx="1" fill="url(#${u}-cil)" ${bordo}/>`;
+    h += `<rect x="30" y="-13" width="7" height="2.4" rx="1.2" fill="var(--steel-lo)" ${bordo}/>`;
+  }
+
+  // --- Bussola (cilindro fisso graduato) ---
+  h += `<rect x="40" y="${-RB}" width="${X0 + 30 - 40}" height="${2 * RB}" fill="url(#${u}-cil)" ${bordo}/>`;
+
+  if (o.vista === "scala") {
+    // Linea di fede: orizzontale sull'asse, dallo inizio della bussola al tamburo
+    h += `<path d="M 41 0 H ${e}" stroke="var(--engrave)" stroke-width="0.14"/>`;
+    let tr = "";                         // tratti della scala
+    let nu = "";                         // numeri della scala
+    for (let j = 0; j <= CORSA; j++) {
+      const lung = j % 5 === 0 ? 2.9 : 2;          // tratti più lunghi ogni 5 mm
+      tr += `M ${X0 + j} 0 V ${-lung} `;           // tratto dei mm sopra la linea
+      if (j < CORSA) tr += `M ${X0 + j + 0.5} 0 V 2 `;   // tratto del mezzo mm sotto la linea
+      if (j % 5 === 0) nu += `<text x="${X0 + j}" y="-3.6" font-size="2.2" text-anchor="middle" fill="var(--engrave)">${j}</text>`;   // numero ogni 5 mm
+    }
+    h += `<path d="${tr}" stroke="var(--engrave)" stroke-width="0.12" fill="none"/>` + nu;
+    if (o.zero) {                        // evidenzia l'ultimo mm e l'eventuale mezzo mm scoperti
+      h += `<path d="M ${X0 + L.I} 0 V -3" stroke="var(--cal-zero)" stroke-width="0.3"/>`;
+      if (L.h) h += `<path d="M ${X0 + L.I + 0.5} 0 V 2.2" stroke="var(--cal-zero)" stroke-width="0.3"/>`;
+    }
+  } else {
+    // --- Vista "nonio": 11 linee longitudinali sulla bussola (0…10), passo angolare 6,48° ---
+    let tr = "";                         // linee del nonio
+    let nu = "";                         // numeri del nonio
+    for (let j = 0; j <= 10; j++) {
+      const y = -RG * Math.sin(j * GR_NON * RAD);  // proiezione della linea j
+      tr += `M ${e - 4.2} ${y} H ${e} `;           // linea orizzontale fino al tamburo
+      if (j % 2 === 0) nu += `<text x="${e - 4.6}" y="${y + 0.36}" font-size="1.05" text-anchor="end" fill="var(--engrave)">${j % 10}</text>`;   // numeri 0 2 4 6 8 0
+    }
+    if (o.coinc) {                       // fascia sulla linea del nonio coincidente
+      const y = -RG * Math.sin(L.k * GR_NON * RAD);
+      h += `<rect x="${e - 4.6}" y="${y - 0.35}" width="8.5" height="0.7" fill="var(--cal-mark-soft)"/>`;
+    }
+    h += `<path d="${tr}" stroke="var(--engrave)" stroke-width="0.1" fill="none"/>` + nu;
+    if (o.coinc) h += `<path d="M ${e - 4.2} ${-RG * Math.sin(L.k * GR_NON * RAD)} H ${e}" stroke="var(--cal-mark)" stroke-width="0.22"/>`;   // linea k evidenziata
+  }
+
+  // --- Tamburo: smusso a sinistra, parte graduata, zigrinatura a destra ---
+  h += `<path d="M ${e} ${-RG - 0.3} L ${e + 1.6} ${-RT} H ${e + LT} V ${RT} H ${e + 1.6} L ${e} ${RG + 0.3} Z" fill="url(#${u}-cil)" ${bordo}/>`;
+  let zig = "";                          // righe della zigrinatura
+  for (let x = e + 16; x < e + LT - 0.3; x += 0.7) zig += `M ${x} ${-RT + 0.3} V ${RT - 0.3} `;
+  h += `<path d="${zig}" stroke="var(--steel-edge)" stroke-width="0.12" fill="none"/>`;
+
+  // --- Graduazioni del tamburo: linea i all'angolo θ = (i − t)·7,2°, proiettata in y = −RG·sin θ ---
+  let tt = "";                           // linee del tamburo
+  let tn = "";                           // numeri del tamburo
+  for (let i = Math.ceil(t - 12); i <= Math.floor(t + 12); i++) {
+    const th = (i - t) * GR_DIV;         // angolo della linea rispetto alla linea di fede
+    if (Math.abs(th) > 84) continue;     // linee sul retro non visibili
+    const y = -RG * Math.sin(th * RAD);  // posizione verticale apparente
+    const idx = ((i % NT) + NT) % NT;    // numero della divisione (0…49)
+    const lung = idx % 5 === 0 ? 3.4 : 2.2;   // linee lunghe ogni 5 divisioni
+    tt += `M ${e + 0.2} ${y} H ${e + lung} `;
+    if (idx % 5 === 0) {                 // numero schiacciato in verticale dalla prospettiva (cos θ)
+      tn += `<text transform="translate(${e + 5.8} ${y}) scale(1 ${Math.cos(th * RAD).toFixed(3)})" y="0.75" font-size="2.1" text-anchor="middle" fill="var(--engrave)">${idx}</text>`;
+    }
+  }
+  h += `<path d="${tt}" stroke="var(--engrave)" stroke-width="0.12" fill="none"/>` + tn;
+
+  if (o.coinc) {                         // evidenzia la linea del tamburo che dà la lettura
+    const iT = o.vista === "scala" ? L.T : L.T + L.k;   // nella vista nonio: linea T + k
+    const y = -RG * Math.sin((iT - t) * GR_DIV * RAD);
+    h += `<path d="M ${e + 0.2} ${y} H ${e + 3.6}" stroke="var(--cal-mark)" stroke-width="0.26"/>`;
+  }
+
+  // --- Cricchetto (frizione) ---
+  h += `<rect x="${e + LT}" y="-5.2" width="11" height="10.4" rx="1.5" fill="url(#${u}-cil)" ${bordo}/>`;
+  let cr = "";                           // zigrinatura del cricchetto
+  for (let x = e + LT + 4; x < e + LT + 10.5; x += 0.8) cr += `M ${x} -4.8 V 4.8 `;
+  h += `<path d="${cr}" stroke="var(--steel-edge)" stroke-width="0.12" fill="none"/>`;
+
+  if (o.richiami) h += richiami(s, e, A, Di, Do);   // numeri delle parti
+  return h;
+}
+
+// Richiami numerati (solo disegno descrittivo, campo 0–25)
+function richiami(s, e, A, Di, Do) {
+  const lista = [                        // [numero, cerchio, punti indicati]
+    [1, [-26, 26], [[-11, 22]]],                     // arco
+    [2, [-8, -20], [[-1.5, -2]]],                    // incudine
+    [3, [s + 2, -20], [[s + 3, -2]]],                // asta mobile
+    [4, [X0 + 3, -22], [[X0 + 3, -6]]],              // bussola
+    [5, [e + 11, -20], [[e + 11, -8.5]]],            // tamburo
+    [6, [e + LT + 10, -18], [[e + LT + 6, -5.2]]],   // cricchetto
+    [7, [24, -26], [[31, -12]]],                     // leva di bloccaggio
+    [8, [12, Do + 10], [[12, Do - 3]]],              // piastra isolante
+  ];
+  let h = "";
+  for (const [num, c, punti] of lista) {
+    h += `<g class="co" data-n="${num}">`;
+    for (const p of punti) h += `<line x1="${c[0]}" y1="${c[1]}" x2="${p[0]}" y2="${p[1]}"/><circle cx="${p[0]}" cy="${p[1]}" r="0.9"/>`;
+    h += `<circle cx="${c[0]}" cy="${c[1]}" r="4.4"/><text x="${c[0]}" y="${c[1] + 1.7}" font-size="5" text-anchor="middle">${num}</text></g>`;
+  }
+  return h;
+}
+
+// viewBox della vista completa (dipende dal campo, perché l'arco si allarga)
+function boxCompleto(A) {
+  const Do = 34 + 0.4 * A;               // profondità esterna dell'arco
+  return `${-A - 20} -17 ${X0 + CORSA + LT + 16 + A + 20} ${Do + 21}`;
+}
+
+// Disegna vista completa + dettaglio scala + dettaglio nonio
+function disegnaTerna(st, ids, uid, zero, coinc) {
+  const s = st.N / st.U;                 // lettura sulla bussola
+  const e = X0 + s;                      // bordo del tamburo
+  const over = $(ids[0]);                // vista completa
+  over.setAttribute("viewBox", boxCompleto(st.A));
+  over.innerHTML = disegnaMicrometro({ ...st, uid: uid + "o", vista: "scala", zero, coinc }) +
+    `<rect x="${e - 9}" y="-9.5" width="20.5" height="19" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3" vector-effect="non-scaling-stroke"/>`;   // zona del dettaglio
+  const det = $(ids[1]);                 // dettaglio bussola + tamburo
+  det.setAttribute("viewBox", `${e - 9} -9.5 20.5 19`);
+  det.innerHTML = disegnaMicrometro({ ...st, uid: uid + "d", vista: "scala", zero, coinc });
+  const nbox = $(ids[2]);                // riquadro del nonio
+  nbox.hidden = st.U !== 1000;           // visibile solo nel millesimale
+  if (st.U === 1000) {
+    const non = $(ids[3]);
+    non.setAttribute("viewBox", `${e - 8} -9.5 18 19`);
+    non.innerHTML = disegnaMicrometro({ ...st, uid: uid + "n", vista: "nonio", zero, coinc });
+  }
+}
+
+// Testo della lettura scomposta
+function spiegazione(st) {
+  const L = scomponi(st.N, st.U);        // parti della lettura
+  const d = decimali(st.U);              // cifre decimali
+  const M = st.A + st.N / st.U;          // misura completa
+  let txt = `${st.A} + ${L.I} + ${L.h ? "0,5" : "0"} + ${L.T} · 0,01`;   // campo + mm + mezzo mm + tamburo
+  if (st.U === 1000) txt += ` + ${L.k} · 0,001`;                       // + nonio
+  return { L, M, d, txt: `${txt} = <b>${fmt(M, d)} mm</b>` };
+}
+
+// Crea i pulsanti di un selettore a segmenti
+function creaSegmenti(cont, valori, etichetta, alClic) {
+  cont.innerHTML = "";                   // svuota il contenitore
+  for (const v of valori) {
+    const b = document.createElement("button");   // nuovo pulsante
+    b.type = "button";                   // non invia moduli
+    b.textContent = etichetta(v);        // testo visibile
+    b.dataset.v = String(v);             // valore memorizzato nel pulsante
+    b.addEventListener("click", () => alClic(v));   // azione al clic
+    cont.appendChild(b);                 // inserisce il pulsante
+  }
+}
+// Evidenzia il pulsante corrispondente al valore attivo
+function segnaAttivo(cont, valore) {
+  for (const b of cont.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.v === String(valore)));   // true solo per quello scelto
+}
+
+// Etichette delle caratteristiche
+function chipMicrometro(st) {
+  return `<span class="chip"><b>Campo</b> ${st.A}–${st.A + 25} mm</span>` +
+    `<span class="chip"><b>Passo vite</b> 0,5 mm</span>` +
+    `<span class="chip"><b>Tamburo</b> 50 div.</span>` +
+    `<span class="chip"><b>r</b> ${NOME_U[st.U]}</span>` +
+    (st.U === 1000 ? `<span class="chip"><b>Nonio</b> 10 div.</span>` : "");
+}
+
+// Trascinamento: asse "x" (orizzontale) o "y" (verticale); cb riceve lo spostamento in mm del disegno
+function abilitaTrascinamento(svg, asse, inizio, cb) {
+  let p0 = null;                         // coordinata iniziale del puntatore
+  let mmPerPx = 1;                       // conversione pixel → mm
+  svg.addEventListener("pointerdown", (e) => {
+    const vb = svg.viewBox.baseVal;      // dimensioni del disegno in mm
+    const r = svg.getBoundingClientRect();   // dimensioni sullo schermo in pixel
+    mmPerPx = 1 / Math.min(r.width / vb.width, r.height / vb.height);   // mm per pixel (adattamento "meet")
+    p0 = asse === "x" ? e.clientX : e.clientY;   // punto di partenza
+    inizio();                            // memorizza la misura di partenza
+    svg.setPointerCapture(e.pointerId);  // segue il puntatore anche fuori dal disegno
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (p0 === null) return;             // nessun trascinamento in corso
+    cb(((asse === "x" ? e.clientX : e.clientY) - p0) * mmPerPx);   // spostamento convertito in mm
+  });
+  const fine = () => { p0 = null; };     // fine del trascinamento
+  svg.addEventListener("pointerup", fine);
+  svg.addEventListener("pointercancel", fine);
+}
+
+// =====================================================================
+// VISTA 1 – LO STRUMENTO
+// =====================================================================
+const PARTI = [
+  ["Arco (staffa)", "Corpo rigido a C che sostiene incudine e bussola; deve deformarsi il meno possibile."],
+  ["Incudine (contatto fisso)", "Faccia di misura fissa, con riporto in metallo duro."],
+  ["Asta mobile (vite)", "Prolungamento della vite micrometrica: avanza o arretra di 0,5 mm a ogni giro."],
+  ["Bussola", "Cilindro fisso con la linea di fede, i mm (sopra) e i mezzi mm (sotto)."],
+  ["Tamburo graduato", "Ruota con la vite; 50 divisioni da 0,01 mm sul bordo smussato."],
+  ["Cricchetto (frizione)", "Slitta oltre una forza prestabilita: rende costante la forza di misura."],
+  ["Leva di bloccaggio", "Blocca l'asta per conservare la misura letta."],
+  ["Piastra isolante", "Riduce il passaggio di calore dalla mano all'arco."],
+];
+
+function initStrumento() {
+  const svg = $("svg-parts");            // disegno descrittivo
+  const st = { A: 0, U: 100, N: 812 };   // esempio: micrometro 0–25 aperto a 8,12 mm
+  svg.setAttribute("viewBox", "-34 -30 140 82");
+  svg.innerHTML = disegnaMicrometro({ ...st, uid: "p", vista: "scala", zero: false, coinc: false, richiami: true });
+  const ul = $("parts-list");
+  ul.innerHTML = PARTI.map((p, i) => `<li data-n="${i + 1}"><span class="num">${i + 1}</span><div><b>${p[0]}</b><span>${p[1]}</span></div></li>`).join("");
+  const accendi = (n, on) => {           // evidenzia voce e richiamo
+    svg.querySelector(`.co[data-n="${n}"]`)?.classList.toggle("on", on);
+    ul.querySelector(`li[data-n="${n}"]`)?.classList.toggle("on", on);
+  };
+  for (const el of [...ul.children, ...svg.querySelectorAll(".co")]) {
+    el.addEventListener("mouseenter", () => accendi(el.dataset.n, true));
+    el.addEventListener("mouseleave", () => accendi(el.dataset.n, false));
+  }
+}
+
+// =====================================================================
+// VISTA 2 – IL PRINCIPIO
+// =====================================================================
+function disegnaVite() {
+  const div = +$("pr-ang").value;        // divisioni ruotate (1 divisione = 0,01 mm)
+  const st = { A: 0, U: 100, N: div };   // spostamento in centesimi
+  const svg = $("svg-vite");
+  svg.setAttribute("viewBox", `${X0 - 7} -9.5 20 19`);   // inquadratura fissa vicino allo zero
+  svg.innerHTML = disegnaMicrometro({ ...st, uid: "v", vista: "scala", zero: true, coinc: true });
+  const giri = Math.floor(div / NT);     // giri completi
+  const resto = div - giri * NT;         // divisioni oltre i giri completi
+  $("pr-ang-text").innerHTML = `Rotazione: <b>${giri} ${giri === 1 ? "giro" : "giri"} e ${resto} divisioni</b> (${fmt(div * GR_DIV, 1)}°). Spostamento s = ${giri} · 0,5 + ${resto} · 0,01 = <b>${fmt(div / 100, 2)} mm</b>.`;
+}
+
+function disegnaPrNonio() {
+  const k = +$("pr-k").value;            // millesimi scelti
+  const st = { A: 0, U: 1000, N: 6230 + k };   // 6,23 mm + k millesimi
+  const svg = $("svg-pr-nonio");
+  const e = X0 + st.N / 1000;
+  svg.setAttribute("viewBox", `${e - 8} -9.5 18 19`);
+  svg.innerHTML = disegnaMicrometro({ ...st, uid: "k", vista: "nonio", zero: true, coinc: true });
+  $("pr-k-text").innerHTML = `La linea <b>${k}</b> del nonio coincide con la linea <b>${23 + k}</b> del tamburo. La lettura sul tamburo è 23 (0,23 mm) e il nonio aggiunge ${k} · 0,001 = <b>${fmt(k / 1000, 3)} mm</b>: totale 6,23 + ${fmt(k / 1000, 3)} = <b>${fmt(6.23 + k / 1000, 3)} mm</b>.`;
+}
+
+function initPrincipio() {
+  $("pr-ang").addEventListener("input", disegnaVite);
+  $("pr-k").addEventListener("input", disegnaPrNonio);
+  disegnaVite();
+  disegnaPrNonio();
+  const st = { A: 25, U: 100, N: 777 };  // esempio: 25 + 7,77 = 32,77 mm
+  const svg = $("svg-example");
+  const e = X0 + 7.77;
+  svg.setAttribute("viewBox", `${e - 10} -9.5 22 19`);
+  svg.innerHTML = disegnaMicrometro({ ...st, uid: "x", vista: "scala", zero: true, coinc: true });
+}
+
+// =====================================================================
+// VISTA 3 – SIMULATORE
+// =====================================================================
+const SIM = { A: 0, U: 100, N: 777, show: true, hl: true };   // stato iniziale: 7,77 mm
+
+function disegnaSimulatore() {
+  SIM.N = limita(SIM.N, 0, CORSA * SIM.U);   // corsa 0–25 mm
+  segnaAttivo($("sim-a"), SIM.A);
+  segnaAttivo($("sim-u"), SIM.U);
+  $("sim-range").max = String(CORSA * SIM.U);
+  $("sim-range").value = String(SIM.N);
+  const sp = spiegazione(SIM);           // lettura scomposta
+  if (document.activeElement !== $("sim-input")) $("sim-input").value = fmt(sp.M, sp.d);
+  $("sim-row-mill").hidden = SIM.U !== 1000;   // pulsanti dei millesimi solo nel millesimale
+  $("sim-readout").innerHTML = SIM.show
+    ? `<div class="big">${fmt(sp.M, sp.d)} <small>mm</small></div><div class="why">${sp.txt}</div>`
+    : `<div class="big">––,––– <small>mm</small></div><div class="why">Misura nascosta: falla leggere alla classe.</div>`;
+  $("sim-chips").innerHTML = chipMicrometro(SIM);
+  disegnaTerna(SIM, ["sim-over", "sim-det", "sim-nbox", "sim-non"], "s", SIM.hl, SIM.hl);
+}
+
+function initSimulatore() {
+  creaSegmenti($("sim-a"), CAMPI, (a) => `${a}–${a + 25}`, (a) => { SIM.A = a; disegnaSimulatore(); });
+  creaSegmenti($("sim-u"), RISOL, (u) => NOME_U[u], (u) => {
+    SIM.N = Math.round(SIM.N / SIM.U * u);   // conserva la posizione cambiando unità
+    SIM.U = u;
+    disegnaSimulatore();
+  });
+  const passo = (q) => () => { SIM.N += q * SIM.U; disegnaSimulatore(); };   // q in mm
+  $("sim-mg").addEventListener("click", passo(-0.5));    // −1 giro
+  $("sim-pg").addEventListener("click", passo(0.5));     // +1 giro
+  $("sim-md").addEventListener("click", passo(-0.01));   // −1 divisione
+  $("sim-pd").addEventListener("click", passo(0.01));    // +1 divisione
+  $("sim-mm").addEventListener("click", () => { SIM.N -= 1; disegnaSimulatore(); });   // −0,001
+  $("sim-pm").addEventListener("click", () => { SIM.N += 1; disegnaSimulatore(); });   // +0,001
+  $("sim-rand").addEventListener("click", () => { SIM.N = casuale(0, CORSA * SIM.U); disegnaSimulatore(); });
+  $("sim-range").addEventListener("input", (e) => { SIM.N = +e.target.value; disegnaSimulatore(); });
+  $("sim-input").addEventListener("change", (e) => {
+    const v = leggiNumero(e.target.value);   // misura scritta
+    if (!isNaN(v)) SIM.N = Math.round((v - SIM.A) * SIM.U);   // toglie l'inizio del campo
+    e.target.blur();
+    disegnaSimulatore();
+  });
+  $("sim-show").addEventListener("change", (e) => { SIM.show = e.target.checked; disegnaSimulatore(); });
+  $("sim-hl").addEventListener("change", (e) => { SIM.hl = e.target.checked; disegnaSimulatore(); });
+
+  let N0 = 0;                            // posizione all'inizio del trascinamento
+  abilitaTrascinamento($("sim-over"), "x", () => { N0 = SIM.N; }, (dmm) => {
+    SIM.N = N0 + Math.round(dmm * SIM.U);   // trascinando a destra l'asta si apre
+    disegnaSimulatore();
+  });
+  const ruota = (dmm) => {               // trascinamento verticale sul tamburo
+    const ddiv = dmm / (RG * GR_DIV * RAD);   // divisioni corrispondenti allo spostamento verticale
+    SIM.N = N0 + Math.round(ddiv * SIM.U / 100);
+    disegnaSimulatore();
+  };
+  abilitaTrascinamento($("sim-det"), "y", () => { N0 = SIM.N; }, ruota);
+  abilitaTrascinamento($("sim-non"), "y", () => { N0 = SIM.N; }, ruota);
+
+  document.addEventListener("keydown", (e) => {   // frecce della tastiera
+    if (location.hash !== "#simulatore") return;
+    if (e.target.tagName === "INPUT" && e.target.type === "text") return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const q = e.shiftKey ? 0.5 : 0.01;   // Maiusc → 1 giro, altrimenti 1 divisione
+    SIM.N += (e.key === "ArrowRight" ? 1 : -1) * q * SIM.U;
+    e.preventDefault();
+    disegnaSimulatore();
+  });
+
+  const fs = $("sim-fs");                // schermo intero
+  if (!document.fullscreenEnabled) fs.hidden = true;
+  fs.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else $("sim-root").requestFullscreen?.().catch(() => { fs.hidden = true; });
+  });
+  document.addEventListener("fullscreenchange", () => {
+    fs.textContent = document.fullscreenElement ? "Esci da schermo intero" : "Schermo intero";
+  });
+}
+
+// =====================================================================
+// VISTA 4 – ESERCITAZIONE
+// =====================================================================
+const LIVELLI = {
+  base: { nome: "Base", desc: "Micrometro 0–25 mm centesimale: mm, mezzo mm e tamburo." },
+  inter: { nome: "Intermedio", desc: "Centesimale con campo 0–25, 25–50 o 50–75 mm scelto a caso: ricorda di sommare l'inizio del campo." },
+  avanz: { nome: "Avanzato", desc: "Millesimale con nonio, campo casuale: risoluzione 0,001 mm." },
+  pers: { nome: "Personalizzato", desc: "Scegli tu campo e risoluzione con i selettori qui sotto." },
+};
+const EX = {
+  livello: "base", A: 0, U: 100, N: 0,   // domanda corrente
+  pa: 0, pu: 100,                        // scelte del personalizzato
+  risposto: false, aiuto: false,
+  pezzi: true, pezzo: null,              // misura su pezzi meccanici (attiva) e pezzo corrente
+  tot: 0, giuste: 0, serie: 0, storia: [], numero: 0,
+};
+
+// Genera una nuova domanda in base al livello
+function nuovaMisura() {
+  if (EX.livello === "base") { EX.A = 0; EX.U = 100; }                            // 0–25 centesimale
+  else if (EX.livello === "inter") { EX.A = CAMPI[casuale(0, 2)]; EX.U = 100; }   // campo casuale, centesimale
+  else if (EX.livello === "avanz") { EX.A = CAMPI[casuale(0, 2)]; EX.U = 1000; }  // campo casuale, millesimale
+  else { EX.A = EX.pa; EX.U = EX.pu; }                                            // scelte del docente
+  EX.pezzo = null;                       // nessun pezzo, salvo quanto segue
+  if (EX.pezzi) {
+    const lo0 = EX.A + 0.3, hi0 = EX.A + CORSA;                  // misure possibili con questo campo
+    const adatti = PEZZI_MIC.filter((p) => p.max >= lo0 && p.min <= hi0);   // pezzi con quote compatibili
+    if (adatti.length) {
+      EX.pezzo = adatti[casuale(0, adatti.length - 1)];          // pezzo casuale tra quelli adatti
+      const lo = Math.max(EX.pezzo.min, lo0), hi = Math.min(EX.pezzo.max, hi0);   // intervallo comune
+      EX.N = casuale(Math.ceil((lo - EX.A) * EX.U), Math.floor((hi - EX.A) * EX.U));   // lettura della bussola in passi
+    }
+  }
+  if (!EX.pezzo) EX.N = casuale(Math.round(0.3 * EX.U), CORSA * EX.U);   // senza pezzo: lettura tra 0,3 e 25 mm
+  EX.risposto = false;                   // domanda aperta
+  EX.aiuto = false;                      // nessun suggerimento
+  EX.numero++;                           // numero progressivo dell'esercizio
+  $("ex-answer").value = "";             // svuota la risposta
+  const cosa = EX.pezzo ? `misura ${EX.pezzo.quota} del pezzo "${EX.pezzo.nome}" con il` : "leggi il";   // consegna
+  $("ex-feedback").innerHTML = `<div class="feedback info">Esercizio ${EX.numero}: ${cosa} micrometro ${EX.A}–${EX.A + 25} mm. Scrivi la misura in mm con ${decimali(EX.U)} decimali.</div>`;
+  disegnaEsercizio();
+}
+
+function disegnaEsercizio() {
+  segnaAttivo($("ex-level"), EX.livello);
+  segnaAttivo($("ex-a"), EX.pa);
+  segnaAttivo($("ex-u"), EX.pu);
+  const pers = EX.livello === "pers";
+  for (const b of [...$("ex-a").children, ...$("ex-u").children]) b.disabled = !pers;
+  $("ex-level-desc").textContent = LIVELLI[EX.livello].desc;
+  const perc = EX.tot ? Math.round(100 * EX.giuste / EX.tot) : 0;
+  $("ex-score").innerHTML = `<div><b>${EX.giuste}/${EX.tot}</b><span>Corrette</span></div><div><b>${perc}%</b><span>Precisione</span></div><div><b>${EX.serie}</b><span>Serie</span></div>`;
+  $("ex-chips").innerHTML = chipMicrometro(EX);
+  $("ex-check").disabled = EX.risposto;
+  $("ex-hint").disabled = EX.risposto;
+  disegnaTerna(EX, ["ex-over", "ex-det", "ex-nbox", "ex-non"], "e", EX.aiuto || EX.risposto, EX.risposto);
+  if (EX.pezzo) {                        // pezzo serrato tra incudine e asta
+    const over = $("ex-over");
+    const pz = pezzoSuMicrometro(EX.pezzo, EX.A + EX.N / EX.U, EX.A);   // disegno con quota M
+    over.insertAdjacentHTML("beforeend", pz.svg);                        // davanti all'arco
+    const vb = boxCompleto(EX.A).split(" ").map(Number);                 // inquadratura normale
+    const dy = Math.max(0, vb[1] - pz.ymin);                             // spazio in più in alto (testa della vite)
+    over.setAttribute("viewBox", `${vb[0]} ${vb[1] - dy} ${vb[2]} ${vb[3] + dy}`);
+    $("ex-pezzo").innerHTML = schedaPezzo(EX.pezzo, "esterna: il pezzo va serrato tra incudine e asta, chiudendo con il cricchetto.");
+  }
+  $("ex-pezzo").hidden = !EX.pezzo;      // scheda visibile solo con un pezzo
+  const righe = EX.storia.slice(-8).reverse().map((r) =>
+    `<tr><td class="mono">${r.num}</td><td class="mono">${r.campo}</td><td>${r.pezzo}</td><td class="mono">${r.giusta}</td><td class="mono">${r.data}</td><td class="${r.ok ? "ok-t" : "err-t"}">${r.ok ? "Corretta" : "Errata"}</td></tr>`).join("");
+  $("ex-hist").innerHTML = EX.storia.length
+    ? `<thead><tr><th>N.</th><th>Strumento</th><th>Pezzo</th><th>Misura</th><th>Risposta</th><th>Esito</th></tr></thead><tbody>${righe}</tbody>` : "";
+}
+
+// Individua il tipo di errore confrontando risposta e misura
+function diagnosi(v) {
+  const U = EX.U;
+  const Nv = v * U;                      // risposta in passi
+  if (Math.abs(Nv - Math.round(Nv)) > 1e-6) return `La misura deve essere un multiplo della risoluzione (${NOME_U[U]}).`;
+  const sv = Math.round(Nv) - EX.A * U;  // lettura della bussola implicita nella risposta
+  const diff = sv - EX.N;                // differenza in passi
+  if (EX.A > 0 && Math.round(Nv) === EX.N) return `Hai letto bene lo strumento ma hai dimenticato di sommare l'inizio del campo (${EX.A} mm).`;
+  if (Math.abs(diff) === U / 2) return diff < 0 ? "Hai dimenticato il mezzo millimetro scoperto sotto la linea di fede." : "Hai aggiunto un mezzo millimetro che non è ancora scoperto.";
+  if (Math.abs(diff) % U === 0) return "Ricontrolla i millimetri interi: conta l'ultimo tratto completamente scoperto sopra la linea di fede.";
+  if (sv >= 0) {
+    const a = scomponi(sv, U), b = scomponi(EX.N, U);   // confronto delle parti
+    if (a.I === b.I && a.h === b.h && a.T !== b.T) return "Bussola letta correttamente: ricontrolla la divisione del tamburo allineata con la linea di fede.";
+    if (a.I === b.I && a.h === b.h && a.T === b.T) return "Bussola e tamburo corretti: ricontrolla quale linea del nonio coincide con una linea del tamburo.";
+  }
+  return "Ripeti la procedura: inizio del campo, mm interi, mezzo mm, tamburo" + (U === 1000 ? ", nonio." : ".");
+}
+
+// Controlla la risposta, aggiorna il punteggio e mostra la soluzione
+function verifica() {
+  if (EX.risposto) return;               // una sola verifica per domanda
+  const v = leggiNumero($("ex-answer").value);   // risposta dello studente
+  if (isNaN(v)) {                        // testo non numerico
+    $("ex-feedback").innerHTML = `<div class="feedback info">Scrivi un numero in millimetri, per esempio ${EX.U === 100 ? "32,77" : "32,774"}.</div>`;
+    return;
+  }
+  const sp = spiegazione(EX);            // soluzione
+  const ok = Math.abs(v - sp.M) < 1e-7;  // confronto con tolleranza numerica
+  EX.risposto = true;
+  EX.tot++;
+  if (ok) { EX.giuste++; EX.serie++; } else { EX.serie = 0; }
+  EX.storia.push({ num: EX.numero, pezzo: EX.pezzo ? EX.pezzo.nome : "—", campo: `${EX.A}–${EX.A + 25} ${EX.U === 100 ? "C" : "M"}`, giusta: fmt(sp.M, sp.d), data: String($("ex-answer").value).trim(), ok });
+  const L = sp.L;
+  const passi = `<ol>
+      ${EX.pezzo ? `<li>${EX.pezzo.nome}: ${EX.pezzo.quota}, misura esterna.</li>` : ""}
+      <li>Inizio del campo: <b>A = ${EX.A} mm</b>.</li>
+      <li>Ultimo tratto dei mm scoperto sopra la linea di fede: <b>I = ${L.I} mm</b>.</li>
+      <li>Mezzo millimetro sotto la linea: <b>${L.h ? "scoperto, +0,5 mm" : "non scoperto, +0 mm"}</b>.</li>
+      <li>Divisione del tamburo sulla linea di fede: <b>T = ${L.T}</b> → ${fmt(L.T / 100, 2)} mm.</li>
+      ${EX.U === 1000 ? `<li>Linea del nonio coincidente: <b>k = ${L.k}</b> → ${fmt(L.k / 1000, 3)} mm.</li>` : ""}
+      <li>M = ${sp.txt}.</li>
+    </ol>`;
+  $("ex-feedback").innerHTML = ok
+    ? `<div class="feedback ok"><strong>Corretto: ${fmt(sp.M, sp.d)} mm</strong>${passi}</div>`
+    : `<div class="feedback err"><strong>Non corretto: la misura è ${fmt(sp.M, sp.d)} mm</strong><p>${diagnosi(v)}</p>${passi}</div>`;
+  disegnaEsercizio();
+}
+
+function initEsercizio() {
+  creaSegmenti($("ex-level"), Object.keys(LIVELLI), (l) => LIVELLI[l].nome, (l) => { EX.livello = l; nuovaMisura(); });
+  creaSegmenti($("ex-a"), CAMPI, (a) => `${a}–${a + 25}`, (a) => { EX.pa = a; nuovaMisura(); });
+  creaSegmenti($("ex-u"), RISOL, (u) => NOME_U[u], (u) => { EX.pu = u; nuovaMisura(); });
+  $("ex-form").addEventListener("submit", (e) => { e.preventDefault(); verifica(); });
+  $("ex-new").addEventListener("click", nuovaMisura);
+  $("ex-pezzi").addEventListener("change", (e) => { EX.pezzi = e.target.checked; nuovaMisura(); });   // attiva/disattiva i pezzi
+  $("ex-hint").addEventListener("click", () => {   // suggerimento: evidenzia solo la bussola
+    EX.aiuto = true;
+    $("ex-feedback").innerHTML = `<div class="feedback info">Suggerimento: i tratti blu indicano i mm interi e l'eventuale mezzo mm scoperti. Ora leggi la divisione del tamburo sulla linea di fede${EX.U === 1000 ? " e la linea del nonio coincidente" : ""}, e non dimenticare l'inizio del campo (${EX.A} mm).</div>`;
+    disegnaEsercizio();
+  });
+  nuovaMisura();
+}
+
+// =====================================================================
+// NAVIGAZIONE TRA LE VISTE
+// =====================================================================
+const VISTE = ["strumento", "principio", "simulatore", "esercizio"];
+function mostraVista() {
+  const nome = location.hash.slice(1);
+  const attiva = VISTE.includes(nome) ? nome : "strumento";
+  for (const v of VISTE) $("view-" + v).hidden = v !== attiva;
+  for (const a of document.querySelectorAll(".tabs a")) {
+    if (a.dataset.view === attiva) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
+}
+
+// =====================================================================
+// TEMA CHIARO / SCURO
+// =====================================================================
+const CHIAVE_TEMA = "tema-laboratorio-metrologia";   // nome con cui il browser ricorda la scelta
+
+// Restituisce il tema mostrato in questo momento: "dark" oppure "light"
+function temaAttuale() {
+  const t = document.documentElement.dataset.theme;      // scelta esplicita (attributo data-theme)
+  if (t === "dark" || t === "light") return t;            // se presente, vale quella
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";   // altrimenti il tema del sistema
+}
+
+// Aggiorna il testo del pulsante: propone sempre il tema opposto
+function aggiornaPulsanteTema() {
+  const scuro = temaAttuale() === "dark";                 // tema attuale
+  $("theme-btn").textContent = scuro ? "☀ Chiaro" : "☾ Scuro";   // testo del pulsante
+  $("theme-btn").setAttribute("aria-pressed", String(scuro));         // stato per l'accessibilità
+}
+
+// Ripristina l'ultima scelta e collega il pulsante
+function initTema() {
+  try {
+    const salvato = localStorage.getItem(CHIAVE_TEMA);    // scelta salvata in precedenza
+    if (salvato === "dark" || salvato === "light") document.documentElement.dataset.theme = salvato;
+  } catch (e) { /* memoria del browser non disponibile: si usa il tema del sistema */ }
+  $("theme-btn").addEventListener("click", () => {
+    const nuovo = temaAttuale() === "dark" ? "light" : "dark";   // inverte il tema
+    document.documentElement.dataset.theme = nuovo;              // le variabili CSS cambiano subito
+    try { localStorage.setItem(CHIAVE_TEMA, nuovo); } catch (e) { /* nessun salvataggio possibile */ }
+    aggiornaPulsanteTema();                                      // aggiorna il testo del pulsante
+  });
+  aggiornaPulsanteTema();                                        // testo iniziale
+}
+
+// =====================================================================
+// SCHEDA DEL PEZZO: disegno tecnico schematico con la quota da misurare
+// (viewBox 140 × 90; la quota richiesta è in arancio con il simbolo "?")
+// =====================================================================
+const MATERIALE = { dado: "zinc", vite: "zinc", rond: "zinc", rondS: "zinc", bocc: "bronze", punta: "hss" };   // materiale di ogni pezzo (gli altri: acciaio)
+
+function iconaPezzo(id, u) {
+  const mat = MATERIALE[id] || "steel";                    // materiale del pezzo
+  const F = `fill="var(--mat-${mat})" stroke="var(--mat-edge)" stroke-width="1.2" stroke-linejoin="round"`;   // pieno con contorno
+  const S = `stroke="var(--mat-edge)" stroke-width="0.8" fill="none"`;          // linee sottili
+  const AX = `stroke="var(--mat-edge)" stroke-width="0.6" stroke-dasharray="8 2 1.5 2" fill="none"`;   // linea d'asse (tratto-punto)
+  const NA = `stroke="var(--mat-edge)" stroke-width="0.7" stroke-dasharray="3 2" fill="none"`;         // linee nascoste (tratteggio)
+  const VUOTO = `fill="var(--panel-2)" stroke="var(--mat-edge)" stroke-width="1.2"`;                    // fori e spazi vuoti
+  const TR = `fill="url(#${u}-hat)"`;                      // tratteggio delle sezioni
+  let h = `<defs>
+    <marker id="${u}-fr" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 Z" fill="var(--cal-mark)"/></marker>
+    <pattern id="${u}-hat" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M 0 0 V 4" stroke="var(--mat-edge)" stroke-width="0.7"/></pattern>
+  </defs>`;
+  // Quota orizzontale da x1 a x2 alla quota y; ya, yb = inizio delle linee di richiamo (null = senza richiami)
+  const qH = (x1, x2, y, ya, yb) =>
+    (ya !== null ? `<path d="M ${x1} ${ya} V ${y + 3} M ${x2} ${yb} V ${y + 3}" stroke="var(--cal-mark)" stroke-width="0.7"/>` : "") +
+    `<path d="M ${x1} ${y} H ${x2}" stroke="var(--cal-mark)" stroke-width="1.2" marker-start="url(#${u}-fr)" marker-end="url(#${u}-fr)"/>` +
+    `<text x="${(x1 + x2) / 2}" y="${y - 2.5}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--cal-mark)">?</text>`;
+  // Quota verticale da y1 a y2 all'ascissa x; xa = inizio delle linee di richiamo (null = senza richiami)
+  const qV = (y1, y2, x, xa) =>
+    (xa !== null ? `<path d="M ${xa} ${y1} H ${x + 3} M ${xa} ${y2} H ${x + 3}" stroke="var(--cal-mark)" stroke-width="0.7"/>` : "") +
+    `<path d="M ${x} ${y1} V ${y2}" stroke="var(--cal-mark)" stroke-width="1.2" marker-start="url(#${u}-fr)" marker-end="url(#${u}-fr)"/>` +
+    `<text x="${x + 4}" y="${(y1 + y2) / 2 + 3.5}" font-size="10" font-weight="600" fill="var(--cal-mark)">?</text>`;
+  // Vertici di un esagono con due facce verticali (centro cx, cy; raggio ai vertici r)
+  const esagono = (cx, cy, r) => [90, 150, 210, 270, 330, 30].map((a) =>
+    `${(cx + r * Math.cos(a * Math.PI / 180)).toFixed(2)},${(cy - r * Math.sin(a * Math.PI / 180)).toFixed(2)}`).join(" ");
+  // Cuscinetto visto di fronte: anello esterno, sfere, anello interno, foro
+  const cuscinetto = (cx, cy) => {
+    let c = `<circle cx="${cx}" cy="${cy}" r="30" ${F}/><circle cx="${cx}" cy="${cy}" r="24" ${VUOTO}/>`;   // anello esterno
+    for (let k = 0; k < 9; k++) {                          // 9 sfere sulla circonferenza primitiva
+      const a = k * 40 * Math.PI / 180;
+      c += `<circle cx="${(cx + 19.5 * Math.cos(a)).toFixed(2)}" cy="${(cy + 19.5 * Math.sin(a)).toFixed(2)}" r="4.2" ${F}/>`;
+    }
+    return c + `<circle cx="${cx}" cy="${cy}" r="15" ${F}/><circle cx="${cx}" cy="${cy}" r="10" ${VUOTO}/>`;   // anello interno e foro
+  };
+  // Alberino a tre gradini visto di lato
+  const alberino = () => `<rect x="12" y="31" width="24" height="18" ${F}/><rect x="36" y="25" width="52" height="30" ${F}/><rect x="88" y="29" width="40" height="22" ${F}/>` +
+    `<path d="M 6 40 H 134" ${AX}/>`;
+
+  switch (id) {
+    case "dado":                                           // dado: vista frontale, quota tra le facce
+      h += `<polygon points="${esagono(70, 38, 26.6)}" ${F}/><circle cx="70" cy="38" r="23" ${S}/>`;
+      h += `<circle cx="70" cy="38" r="11" ${VUOTO}/><path d="M 84 38 A 14 14 0 1 1 70 24" ${S}/>`;   // foro e filetto (3/4 di cerchio)
+      h += qH(47, 93, 82, 51.3, 51.3);
+      break;
+    case "perno":                                          // perno: vista laterale, quota sul diametro
+      h += `<path d="M 60 6 H 80 L 82 8 V 68 L 80 70 H 60 L 58 68 V 8 Z" ${F}/><path d="M 58 8 H 82 M 58 68 H 82" ${S}/><path d="M 70 2 V 74" ${AX}/>`;
+      h += qH(58, 82, 83, 70, 70);
+      break;
+    case "cuscD":                                          // cuscinetto: diametro esterno
+      h += cuscinetto(70, 37) + qH(40, 100, 82, 37, 37);
+      break;
+    case "cuscd":                                          // cuscinetto: diametro del foro
+      h += cuscinetto(70, 37) + qH(60, 80, 37, null, null);
+      break;
+    case "albD":                                           // alberino: diametro del gradino maggiore
+      h += alberino() + qV(25, 55, 62, null);
+      break;
+    case "albL":                                           // alberino: lunghezza totale
+      h += alberino() + qH(12, 128, 74, 49, 51);
+      break;
+    case "vite":                                           // vite: diametro del gambo
+      h += `<rect x="12" y="20" width="18" height="40" rx="1.5" ${F}/><path d="M 12 30 H 30 M 12 50 H 30" ${S}/>`;   // testa esagonale vista di lato
+      h += `<path d="M 30 31 H 120 L 122 33 V 47 L 120 49 H 30 Z" ${F}/>`;                                            // gambo
+      for (let x = 66; x <= 116; x += 5) h += `<path d="M ${x} 31 L ${x + 2.5} 49" ${S}/>`;                         // filetto
+      h += `<path d="M 66 33.5 H 121 M 66 46.5 H 121" stroke="var(--mat-edge)" stroke-width="0.5" fill="none"/>`;     // fondo del filetto
+      h += qV(31, 49, 128, 122);
+      break;
+    case "rond":                                           // rondella: diametro esterno
+      h += `<circle cx="70" cy="37" r="30" ${F}/><circle cx="70" cy="37" r="13" ${VUOTO}/>` + qH(40, 100, 82, 37, 37);
+      break;
+    case "rondS":                                          // rondella: spessore (vista laterale)
+      h += `<rect x="64" y="8" width="12" height="60" ${F}/><path d="M 64 25 H 76 M 64 51 H 76" ${NA}/><path d="M 58 38 H 82" ${AX}/>`;
+      h += qH(64, 76, 80, 68, 68);
+      break;
+    case "bocc":                                           // boccola: sezione, diametro interno
+      h += `<rect x="34" y="10" width="18" height="60" ${F}/><rect x="34" y="10" width="18" height="60" ${TR}/>`;
+      h += `<rect x="88" y="10" width="18" height="60" ${F}/><rect x="88" y="10" width="18" height="60" ${TR}/>`;
+      h += `<path d="M 52 10 H 88 M 52 70 H 88" ${S}/><path d="M 70 4 V 76" ${AX}/>` + qH(52, 88, 40, null, null);
+      break;
+    case "blocco": {                                       // blocchetto: sezione con foro cieco, profondità
+      const d = "M 20 14 H 58 V 52 H 82 V 14 H 124 V 72 H 20 Z";   // contorno con il foro aperto in alto
+      h += `<path d="${d}" ${F}/><path d="${d}" ${TR}/><path d="M 70 8 V 58" ${AX}/>` + qV(14, 52, 100, 82);
+      break;
+    }
+    case "sfera":                                          // sfera: diametro
+      h += `<circle cx="70" cy="37" r="28" ${F}/><ellipse cx="60" cy="27" rx="8" ry="5" fill="#ffffff" opacity=".45"/>` + qH(42, 98, 80, 37, 37);
+      break;
+    case "punta":                                          // punta elicoidale: diametro
+      h += `<rect x="10" y="31" width="46" height="18" ${F}/><path d="M 56 31 H 112 L 126 40 L 112 49 H 56 Z" ${F}/>`;   // codolo, corpo e cuspide
+      for (let x = 58; x < 108; x += 12) h += `<path d="M ${x} 31 Q ${x + 7} 40 ${x + 12} 49" ${S}/>`;                  // eliche
+      h += qV(31, 49, 84, null);
+      break;
+    case "lam":                                            // lamiera: spessore
+      h += `<rect x="64" y="8" width="12" height="60" ${F}/><rect x="64" y="8" width="12" height="60" ${TR}/>` + qH(64, 76, 80, 68, 68);
+      break;
+    case "cuscB":                                          // cuscinetto: larghezza (vista laterale)
+      h += `<rect x="52" y="6" width="36" height="66" rx="2" ${F}/><path d="M 52 15 H 88 M 52 63 H 88" ${S}/><path d="M 52 25 H 88 M 52 53 H 88" ${NA}/><path d="M 46 39 H 94" ${AX}/>`;
+      h += qH(52, 88, 83, 72, 72);
+      break;
+  }
+  return h;
+}
+
+// Codice HTML della scheda del pezzo
+function schedaPezzo(p, tipoMisura) {
+  return `<svg viewBox="0 0 140 90" role="img" aria-label="${p.nome}">${iconaPezzo(p.id, "ic")}</svg>` +
+    `<div class="pezzo-txt"><span class="label">Pezzo da misurare</span><b>${p.nome}</b>` +
+    `<span>Quota da rilevare: <b>${p.quota}</b></span>` +
+    (tipoMisura ? `<span>Misura ${tipoMisura}</span>` : "") +
+    `<span class="nota">Disegno schematico, non in scala. La quota in arancio è quella da leggere sullo strumento.</span></div>`;
+}
+
+// =====================================================================
+// PEZZI MECCANICI PER L'ESERCITAZIONE CON IL MICROMETRO (solo misure esterne)
+// min, max: intervallo realistico della quota [mm]
+// =====================================================================
+const PEZZI_MIC = [
+  { id: "perno", nome: "Perno cilindrico", quota: "diametro", min: 3, max: 75 },
+  { id: "sfera", nome: "Sfera per cuscinetti", quota: "diametro", min: 2, max: 25 },
+  { id: "albD", nome: "Alberino a gradini", quota: "diametro del gradino maggiore", min: 5, max: 60 },
+  { id: "vite", nome: "Vite a testa esagonale", quota: "diametro esterno del filetto", min: 2.8, max: 24 },
+  { id: "punta", nome: "Punta elicoidale da trapano", quota: "diametro", min: 1, max: 20 },
+  { id: "rondS", nome: "Rondella piana", quota: "spessore", min: 0.5, max: 6 },
+  { id: "lam", nome: "Lamiera", quota: "spessore", min: 0.5, max: 10 },
+  { id: "cuscB", nome: "Cuscinetto radiale a sfere", quota: "larghezza B", min: 5, max: 25 },
+  { id: "cuscD", nome: "Cuscinetto radiale a sfere", quota: "diametro esterno D", min: 16, max: 75 },
+  { id: "dado", nome: "Dado esagonale", quota: "apertura chiave (distanza tra due facce opposte)", min: 5.5, max: 46 },
+];
+
+// Disegna il pezzo tra incudine (x = −A) e asta (x = s), centrato sull'asse di misura y = 0.
+function pezzoSuMicrometro(p, M, A) {
+  const xL = -A;                                                   // faccia dell'incudine
+  const mat = MATERIALE[p.id] || "steel";                          // materiale del pezzo
+  const f = `fill="var(--mat-${mat})" stroke="var(--mat-edge)" stroke-width="1" vector-effect="non-scaling-stroke"`;   // pieno con contorno
+  const sl = `stroke="var(--mat-edge)" stroke-width="0.2" fill="none"`;                       // linee sottili
+  const cl = `stroke="var(--mat-edge)" stroke-width="0.16" stroke-dasharray="3 1 0.6 1" fill="none"`;   // linea d'asse
+  let s = "";                                                      // codice SVG
+  let ymin = -17;                                                  // limite superiore del disegno
+  const rett = (h) => `<rect x="${xL}" y="${-h / 2}" width="${M}" height="${h}" ${f}/>`;   // rettangolo largo M e alto h, centrato
+  switch (p.id) {
+    case "perno":                                                  // perno con asse verticale
+      s += rett(28) + `<path d="M ${xL + M / 2} -16 V 16" ${cl}/>`;
+      break;
+    case "sfera":                                                  // sfera di diametro M
+      s += `<circle cx="${xL + M / 2}" cy="0" r="${M / 2}" ${f}/><ellipse cx="${xL + 0.36 * M}" cy="${-0.18 * M}" rx="${0.14 * M}" ry="${0.09 * M}" fill="#ffffff" opacity=".45"/>`;
+      break;
+    case "albD":                                                   // alberino verticale, gradino maggiore tra i contatti
+      s += `<rect x="${xL + 0.14 * M}" y="-15" width="${0.72 * M}" height="30" ${f}/>` + rett(14) + `<path d="M ${xL + M / 2} -16 V 16" ${cl}/>`;
+      break;
+    case "vite": {                                                 // vite verticale con testa in alto
+      const pp = limita(M * 0.15, 0.5, 3);                         // passo del filetto disegnato
+      s += `<rect x="${xL}" y="-8" width="${M}" height="23" ${f}/>`;
+      let fil = "";
+      for (let y = -6; y < 14; y += pp) fil += `M ${xL} ${y} L ${xL + M} ${y + pp / 2} `;
+      s += `<path d="${fil}" ${sl}/>`;
+      const hh = 0.65 * M;                                         // altezza della testa
+      s += `<rect x="${xL - 0.3 * M}" y="${-8 - hh}" width="${1.6 * M}" height="${hh}" rx="0.5" ${f}/>`;
+      ymin = Math.min(-17, -8 - hh - 2);
+      break;
+    }
+    case "punta": {                                                // punta da trapano verticale, cuspide in basso
+      s += `<rect x="${xL}" y="-15" width="${M}" height="27" ${f}/>`;
+      let el = "";
+      for (let y = -13; y < 10; y += Math.max(1.2, M * 0.9)) el += `M ${xL} ${y} Q ${xL + M / 2} ${y + 0.4 * M} ${xL + M} ${y + 0.9 * M} `;   // eliche
+      s += `<path d="${el}" ${sl}/><path d="M ${xL} 12 L ${xL + M / 2} ${12 + 0.3 * M} L ${xL + M} 12 Z" ${f}/>`;
+      break;
+    }
+    case "rondS":                                                  // rondella di taglio: lo spessore è tra i contatti
+      s += rett(26) + `<path d="M ${xL} -6 H ${xL + M} M ${xL} 6 H ${xL + M}" stroke="var(--mat-edge)" stroke-width="0.16" stroke-dasharray="0.8 0.5" fill="none"/>`;
+      break;
+    case "lam":                                                    // lamiera di taglio
+      s += rett(30) + `<path d="M ${xL - 0.5} -15 L ${xL + M / 2} -16 L ${xL + M + 0.5} -15 M ${xL - 0.5} 15 L ${xL + M / 2} 16 L ${xL + M + 0.5} 15" ${sl}/>`;   // linee di interruzione
+      break;
+    case "cuscB": {                                                // cuscinetto con asse orizzontale: larghezza tra i contatti
+      const h = 30;
+      s += `<rect x="${xL}" y="${-h / 2}" width="${M}" height="${h}" rx="0.8" ${f}/><path d="M ${xL} -11 H ${xL + M} M ${xL} 11 H ${xL + M}" ${sl}/><path d="M ${xL - 2} 0 H ${xL + M + 2}" ${cl}/>`;
+      break;
+    }
+    case "cuscD": {                                                // cuscinetto con asse verticale: diametro tra i contatti
+      const B = limita(0.3 * M, 5, 20);                            // larghezza
+      s += rett(B) + `<path d="M ${xL} ${-B / 2 + 0.8} H ${xL + M} M ${xL} ${B / 2 - 0.8} H ${xL + M}" ${sl}/><path d="M ${xL + M / 2} ${-B / 2 - 2} V ${B / 2 + 2}" ${cl}/>`;
+      break;
+    }
+    case "dado": {                                                 // dado di lato
+      const t = limita(0.8 * M, 4, 28);                            // spessore
+      s += rett(t) + `<path d="M ${xL + M / 2} ${-t / 2} V ${t / 2}" ${sl}/>`;
+      break;
+    }
+  }
+  return { svg: s, ymin };
+}
+
+// ---------- AVVIO ----------
+initTema();                              // pulsante Chiaro/Scuro
+initStrumento();                         // disegno descrittivo
+initPrincipio();                         // figure del principio
+initSimulatore();
+initEsercizio();
+disegnaSimulatore();
+window.addEventListener("hashchange", mostraVista);
+mostraVista();
+</script>

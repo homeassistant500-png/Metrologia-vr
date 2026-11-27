@@ -1,0 +1,1369 @@
+<title>Laboratorio Calibro a Nonio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- Font da Google Fonts: Barlow Condensed (titoli, stile "officina"), IBM Plex Sans (testo), IBM Plex Mono (numeri e misure) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* =====================================================================
+   FOGLIO DI STILE
+   Layout: testata con righello millimetrato, schede di navigazione,
+   contenuto a colonna (max 1180 px); il simulatore usa due colonne
+   (comandi | disegni) che diventano una sola su schermi stretti.
+   ===================================================================== */
+
+/* --- Variabili colore e carattere (tema chiaro) --- */
+:root {
+  --bg: #f1f3f6;            /* sfondo pagina: grigio freddo */
+  --panel: #ffffff;         /* sfondo dei pannelli */
+  --panel-2: #e8ecf1;       /* sfondo secondario (tabelle, chip) */
+  --line: #d2d8e0;          /* bordi sottili */
+  --fg: #17202b;            /* testo principale */
+  --muted: #566273;         /* testo secondario */
+  --accent: #2448b5;        /* colore guida (blu cobalto) */
+  --accent-fg: #ffffff;     /* testo sopra il colore guida */
+  --accent-soft: #e2e8fa;   /* sfondo tenue del colore guida */
+  --ok: #1d7a47;            /* risposta corretta */
+  --ok-soft: #e0f1e7;
+  --err: #b42318;           /* risposta errata */
+  --err-soft: #fbe6e3;
+  /* Colori dell'acciaio del calibro (restano chiari anche nel tema scuro, come l'oggetto reale) */
+  --steel-hi: #f8fafc;
+  --steel-mid: #d3d9e0;
+  --steel-lo: #97a2af;
+  --steel-edge: #5c6875;
+  --engrave: #121820;       /* incisioni: tratti e numeri */
+  --cal-zero: #1f45c4;      /* evidenziazione zero del nonio / mm interi */
+  --cal-mark: #d27a00;      /* evidenziazione tratto coincidente */
+  --cal-mark-soft: rgba(242, 153, 0, .28);
+  --lens-bg: #dfe4ea;       /* sfondo della lente */
+  /* Caratteri */
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+  --radius: 6px;
+}
+
+/* --- Tema scuro automatico (impostazione di sistema) --- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1318; --panel: #161d25; --panel-2: #1e2731; --line: #2c3743;
+    --fg: #e5eaf0; --muted: #9ba8b6; --accent: #8aa5ff; --accent-fg: #0e1318; --accent-soft: #1d2a4d;
+    --ok: #52c58a; --ok-soft: #13301f; --err: #ff8073; --err-soft: #3a1714;
+    --steel-hi: #e6ebf0; --steel-mid: #bfc8d2; --steel-lo: #87929f; --steel-edge: #46505c;
+    --lens-bg: #1b232c;
+    color-scheme: dark;
+  }
+}
+/* --- Tema scuro scelto esplicitamente --- */
+:root[data-theme="dark"] {
+  --bg: #0e1318; --panel: #161d25; --panel-2: #1e2731; --line: #2c3743;
+  --fg: #e5eaf0; --muted: #9ba8b6; --accent: #8aa5ff; --accent-fg: #0e1318; --accent-soft: #1d2a4d;
+  --ok: #52c58a; --ok-soft: #13301f; --err: #ff8073; --err-soft: #3a1714;
+  --steel-hi: #e6ebf0; --steel-mid: #bfc8d2; --steel-lo: #87929f; --steel-edge: #46505c;
+  --lens-bg: #1b232c;
+  color-scheme: dark;
+}
+
+/* --- Impostazioni generali --- */
+* { box-sizing: border-box; }                                   /* le dimensioni includono bordo e padding */
+[hidden] { display: none !important; }                          /* gli elementi nascosti non occupano spazio */
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; line-height: 1.1; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.9rem; letter-spacing: .01em; }
+h3 { font-size: 1.3rem; letter-spacing: .02em; }
+p { margin: 0; max-width: 68ch; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }   /* focus visibile da tastiera */
+
+/* --- Testata --- */
+.top { background: var(--panel); border-bottom: 1px solid var(--line); position: relative; }
+.top-in { max-width: 1180px; margin: 0 auto; padding-block: 14px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: end; gap: 10px 16px; }
+.brand { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; }
+.brand h1 { font-size: 1.9rem; text-transform: uppercase; letter-spacing: .04em; }
+.brand small { font-family: var(--f-mono); font-size: .74rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+/* Righello millimetrato sotto la testata: tratti ogni 1 mm (6 px), più lunghi ogni 5 e 10 */
+.ruler { height: 12px; background:
+  repeating-linear-gradient(90deg, var(--fg) 0 1px, transparent 1px 60px) bottom left / 100% 12px no-repeat,
+  repeating-linear-gradient(90deg, var(--fg) 0 1px, transparent 1px 30px) bottom left / 100% 8px no-repeat,
+  repeating-linear-gradient(90deg, var(--muted) 0 1px, transparent 1px 6px) bottom left / 100% 5px no-repeat;
+  opacity: .55; }
+
+/* --- Schede di navigazione --- */
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.tabs a { font-family: var(--f-display); font-size: 1.12rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; text-decoration: none; color: var(--muted); padding: 8px 10px 10px; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid transparent; border-bottom: none; }
+.tabs a:hover { color: var(--fg); background: var(--panel-2); }
+.tabs a[aria-current="page"] { color: var(--accent); background: var(--bg); border-color: var(--line); margin-bottom: -1px; }
+
+/* --- Contenitore delle viste --- */
+main { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.view { display: flex; flex-direction: column; gap: 26px; }
+.intro { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.lead { font-size: 1.05rem; color: var(--muted); }
+
+/* --- Pannelli --- */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* --- Disegni SVG --- */
+.figure { width: 100%; overflow-x: auto; }
+svg.cal { display: block; width: 100%; height: auto; }
+svg.cal text { font-family: var(--f-mono); }
+.lens-box { position: relative; height: clamp(200px, 30vw, 340px); background: var(--lens-bg); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.lens-box svg { width: 100%; height: 100%; display: block; }
+.lens-tag { position: absolute; left: 10px; top: 8px; font-family: var(--f-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel); padding: 2px 8px; border-radius: 3px; border: 1px solid var(--line); }
+.drag { cursor: ew-resize; touch-action: pan-y; }
+
+/* --- Richiami numerati del disegno dello strumento --- */
+.co circle { fill: var(--accent); }
+.co text { fill: var(--accent-fg); font-family: var(--f-display) !important; font-weight: 700; }
+.co line { stroke: var(--accent); stroke-width: .35; }
+.co.on circle { fill: var(--cal-mark); }
+.co.on line { stroke: var(--cal-mark); stroke-width: .6; }
+
+/* --- Legenda delle parti --- */
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
+.parts li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); cursor: default; }
+.parts li.on { border-color: var(--cal-mark); }
+.num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; }
+.parts b { display: block; font-weight: 600; }
+.parts span { color: var(--muted); font-size: .92rem; }
+
+/* --- Griglie di contenuto --- */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.spec { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0; }
+.spec dt { font-family: var(--f-mono); font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+.spec dd { margin: 0; }
+.checklist { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+/* --- Formule --- */
+.formulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.formula { background: var(--panel-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.formula code { font-family: var(--f-mono); font-size: 1.15rem; font-weight: 500; }
+.formula span { font-size: .88rem; color: var(--muted); }
+
+/* --- Tabelle --- */
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+td.mono { font-family: var(--f-mono); }
+
+/* --- Passi della procedura di lettura --- */
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; counter-increment: s; }
+.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; }
+
+/* --- Comandi (pulsanti, selettori) --- */
+.sim { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.controls { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.seg button { flex: 1; border: none; background: var(--panel); padding: 8px 6px; cursor: pointer; font-family: var(--f-mono); font-size: .9rem; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: none; }
+.seg button:hover { background: var(--panel-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.seg button:disabled { opacity: .45; cursor: not-allowed; }
+.seg.grid { display: grid; grid-template-columns: 1fr 1fr; }                     /* selettore su due righe */
+.seg.grid button:nth-child(2n) { border-right: none; }
+.seg.grid button:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 8px 12px; cursor: pointer; font-weight: 500; }
+.btn:hover { background: var(--panel-2); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-row .btn { flex: 1; font-family: var(--f-mono); font-size: .88rem; padding: 8px 6px; }
+.num-in { display: flex; align-items: center; gap: 8px; }
+.num-in input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: var(--f-mono); font-size: 1.05rem; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+/* --- Lettura digitale e caratteristiche del nonio --- */
+.readout { background: var(--panel-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.readout .big { font-family: var(--f-mono); font-size: 2.2rem; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.readout .big small { font-size: 1rem; color: var(--muted); font-weight: 400; }
+.readout .why { font-size: .9rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: .78rem; padding: 3px 8px; border-radius: 3px; background: var(--panel-2); color: var(--fg); white-space: nowrap; }
+.chip b { color: var(--muted); font-weight: 400; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* --- Esercitazione --- */
+.score { display: flex; flex-wrap: wrap; gap: 10px; }
+.score div { background: var(--panel-2); border-radius: var(--radius); padding: 8px 12px; min-width: 110px; }
+.score b { display: block; font-family: var(--f-mono); font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.score span { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: var(--f-mono); }
+.feedback { border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); }
+.feedback.ok { background: var(--ok-soft); border-color: var(--ok); }
+.feedback.err { background: var(--err-soft); border-color: var(--err); }
+.feedback.info { background: var(--panel-2); }
+.feedback strong { font-family: var(--f-display); font-size: 1.3rem; letter-spacing: .02em; }
+.feedback.ok strong { color: var(--ok); }
+.feedback.err strong { color: var(--err); }
+.feedback ol { margin: 0; padding-left: 20px; }
+.ok-t { color: var(--ok); font-weight: 600; }
+.err-t { color: var(--err); font-weight: 600; }
+
+/* --- Adattamento a schermi stretti (tablet in verticale, smartphone) --- */
+@media (max-width: 860px) {
+  .sim { grid-template-columns: 1fr; }
+  .tabs { margin-left: 0; }
+  .tabs a { font-size: 1rem; padding: 7px 10px 9px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feedback { animation: fade .25s ease-out; }
+  @keyframes fade { from { transform: translateY(4px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+:fullscreen { background: var(--bg); padding: 20px; overflow: auto; }
+
+/* --- Pulsante del tema e scheda del pezzo da misurare --- */
+:root {
+  --mat-steel: #8fa1b5;     /* acciaio */
+  --mat-zinc: #d9c77e;      /* acciaio zincato giallo (viteria) */
+  --mat-bronze: #c6904f;    /* bronzo */
+  --mat-hss: #5d6773;       /* acciaio rapido (utensili) */
+  --mat-edge: #2f3842;      /* contorni dei pezzi */
+}
+.theme-btn { align-self: center; border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-family: var(--f-mono); font-size: .8rem; margin-bottom: 8px; white-space: nowrap; }
+.theme-btn:hover { border-color: var(--accent); }
+.pezzo { display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 14px; align-items: center; background: var(--panel-2); border-radius: var(--radius); padding: 12px; }
+.pezzo svg { width: 100%; height: auto; display: block; }
+.pezzo-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pezzo-txt > b { font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; letter-spacing: .02em; }
+.pezzo-txt .nota { font-size: .8rem; color: var(--muted); }
+@media (max-width: 480px) { .pezzo { grid-template-columns: 1fr; } }
+
+/* --- Logo del docente nella testata (su riquadro bianco: resta leggibile anche nel tema scuro) --- */
+.logo { height: 64px; width: auto; background: #ffffff; border-radius: 8px; padding: 3px; border: 1px solid var(--line); align-self: center; }
+.top-in { align-items: center; padding-block: 12px 0; }
+.brand { padding-bottom: 0; }
+.theme-btn { order: 2; margin-left: auto; margin-bottom: 0; }   /* pulsante del tema in alto a destra */
+.tabs { order: 3; flex-basis: 100%; margin-left: 0; }            /* schede su una riga propria, sotto il titolo */
+@media (max-width: 480px) { .logo { height: 48px; } }
+</style>
+
+<!-- =====================================================================
+     STRUTTURA DELLA PAGINA
+     ===================================================================== -->
+<header class="top">
+  <div class="top-in">
+    <img class="logo" src="data:image/webp;base64,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" alt="Logo Prof. Giuseppe Fumuso – Meccatronica" width="75" height="64">
+    <div class="brand">
+      <h1>Calibro a nonio</h1>
+      <small>Laboratorio di metrologia · Meccatronica</small>
+    </div>
+    <nav class="tabs" aria-label="Sezioni">
+      <a href="#strumento" data-view="strumento">Lo strumento</a>
+      <a href="#nonio" data-view="nonio">Il nonio</a>
+      <a href="#simulatore" data-view="simulatore">Simulatore</a>
+      <a href="#esercizio" data-view="esercizio">Esercitazione</a>
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Scuro</button>
+  </div>
+  <div class="ruler" aria-hidden="true"></div>
+</header>
+
+<main>
+
+<!-- ===================== VISTA 1: LO STRUMENTO ===================== -->
+<section class="view" id="view-strumento">
+  <div class="intro">
+    <span class="eyebrow">Strumento di misura a lettura diretta</span>
+    <h2>Il calibro a corsoio con nonio</h2>
+    <p class="lead">Il calibro misura dimensioni esterne, interne e profondità. La scala principale dà i millimetri interi; il nonio inciso sul cursore aggiunge la parte decimale con risoluzione di 0,1 mm, 0,05 mm o 0,02 mm. Passa il mouse sulle voci dell'elenco per evidenziare la parte nel disegno.</p>
+  </div>
+
+  <div class="panel">
+    <div class="figure"><svg class="cal" id="svg-parts" role="img" aria-label="Disegno del calibro con le parti numerate"></svg></div>
+    <ul class="parts" id="parts-list"></ul>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Caratteristiche dello strumento</h3>
+      <dl class="spec">
+        <dt>Campo di misura</dt><dd>Di solito 0–150 mm; esistono modelli da 200, 300 mm e oltre.</dd>
+        <dt>Risoluzione</dt><dd>Valore del più piccolo spostamento leggibile: 0,1 mm (nonio 1/10), 0,05 mm (1/20), 0,02 mm (1/50).</dd>
+        <dt>Scala principale</dt><dd>Passo p = 1 mm, numerata ogni 10 mm (i numeri indicano i centimetri).</dd>
+        <dt>Misure possibili</dt><dd>Esterne (becchi grandi), interne (becchi a coltello), profondità (asta posteriore), gradini (testa dell'asta).</dd>
+        <dt>Materiale</dt><dd>Acciaio inossidabile temprato, superfici di misura rettificate.</dd>
+        <dt>Temperatura</dt><dd>Le misure di riferimento si intendono a 20 °C: pezzo e strumento devono essere alla stessa temperatura.</dd>
+      </dl>
+    </div>
+    <div class="panel">
+      <h3>Buone pratiche di misura</h3>
+      <ul class="checklist">
+        <li>Pulisci becchi e pezzo: trucioli e olio falsano la misura.</li>
+        <li>Verifica lo zero: a becchi chiusi lo zero del nonio deve coincidere con lo zero dell'asta.</li>
+        <li>Tieni il pezzo vicino all'asta, alla base dei becchi: si riduce l'errore dovuto al gioco del cursore (principio di Abbe).</li>
+        <li>Usa una pressione leggera e costante con la rotella: troppa forza flette i becchi.</li>
+        <li>Leggi guardando perpendicolarmente alla scala per evitare l'errore di parallasse.</li>
+        <li>Se devi estrarre lo strumento prima di leggere, blocca il cursore con la vite.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 2: IL NONIO ===================== -->
+<section class="view" id="view-nonio" hidden>
+  <div class="intro">
+    <span class="eyebrow">Principio di funzionamento</span>
+    <h2>Come funziona il nonio</h2>
+    <p class="lead">Il nonio è una scala di n divisioni lunga leggermente meno di un numero intero di millimetri. Ogni divisione del nonio è più corta di quella dell'asta di una quantità fissa, la risoluzione r. Spostando il cursore di k·r, coincide con un tratto dell'asta proprio il tratto k del nonio.</p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <h3>Il principio, passo per passo</h3>
+      <div class="seg" id="pr-nonio" role="group" aria-label="Tipo di nonio"></div>
+    </div>
+    <div class="figure"><svg class="cal" id="svg-principle" role="img" aria-label="Nonio che si sposta di un passo alla volta"></svg></div>
+    <div class="field">
+      <label class="label" for="pr-k">Spostamento del cursore (numero di passi k)</label>
+      <input type="range" id="pr-k" min="0" max="20" step="1" value="1">
+    </div>
+    <p id="pr-text"></p>
+  </div>
+
+  <div class="panel">
+    <h3>Formule</h3>
+    <div class="formulas">
+      <div class="formula"><code>r = p / n</code><span>Risoluzione [mm]: p = passo dell'asta (1 mm), n = numero di divisioni del nonio</span></div>
+      <div class="formula"><code>L = (γ · n − 1) · p</code><span>Lunghezza del nonio [mm]: γ = modulo, 1 per il nonio semplice, 2 per il doppio</span></div>
+      <div class="formula"><code>d = L / n = γ · p − r</code><span>Ampiezza di una divisione del nonio [mm]</span></div>
+      <div class="formula"><code>M = I + k · r</code><span>Misura [mm]: I = mm interi letti sull'asta, k = tratto coincidente del nonio</span></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Nonio semplice e nonio doppio</h3>
+      <p>Nel nonio <b>semplice</b> (γ = 1) le divisioni sono quasi di 1 mm e i tratti sono molto fitti. Nel nonio <b>doppio</b> (γ = 2) ogni divisione è quasi di 2 mm: il nonio è lungo circa il doppio ma i tratti sono più distanziati e la coincidenza si individua meglio. La risoluzione non cambia, dipende solo da n.</p>
+      <p>Nei calibri commerciali sono diffusi il nonio 1/10 da 9 mm o 19 mm, l'1/20 da 39 mm e l'1/50 da 49 mm. Il nonio 1/50 doppio (99 mm) è raro perché sarebbe troppo lungo: qui serve per completare il confronto.</p>
+    </div>
+    <div class="panel">
+      <h3>Tabella dei noni</h3>
+      <div class="table-wrap"><table id="nonio-table"></table></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>Procedura di lettura · esempio con nonio 1/20 doppio</h3>
+    <div class="figure"><svg class="cal" id="svg-example" role="img" aria-label="Esempio di lettura 23,35 mm"></svg></div>
+    <div class="legend"><span><i style="background:var(--cal-zero)"></i>Zero del nonio e mm interi</span><span><i style="background:var(--cal-mark)"></i>Tratti coincidenti</span></div>
+    <ol class="steps">
+      <li><div><b>Leggi i millimetri interi.</b> Individua sull'asta l'ultimo tratto a sinistra dello zero del nonio: qui è il tratto dei 23 mm, quindi I = 23 mm.</div></li>
+      <li><div><b>Cerca il tratto coincidente.</b> Scorri il nonio e trova il tratto allineato con un tratto qualsiasi dell'asta: è il tratto k = 7. I numeri del nonio indicano i decimi: il tratto sta tra 3 e 4, cioè a 0,35 mm.</div></li>
+      <li><div><b>Somma.</b> M = I + k · r = 23 + 7 · 0,05 = 23,35 mm.</div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ===================== VISTA 3: SIMULATORE ===================== -->
+<section class="view" id="view-simulatore" hidden>
+  <div class="intro">
+    <span class="eyebrow">Spiegazione alla lavagna</span>
+    <h2>Simulatore</h2>
+    <p class="lead">Scegli il nonio e imposta la misura con i pulsanti, con il cursore o trascinando il calibro. La lente in basso ingrandisce la zona di lettura.</p>
+  </div>
+
+  <div class="sim" id="sim-root">
+    <div class="panel controls">
+      <div class="field"><span class="label">Risoluzione del nonio</span><div class="seg" id="sim-n" role="group" aria-label="Risoluzione"></div></div>
+      <div class="field"><span class="label">Tipo di nonio</span><div class="seg" id="sim-g" role="group" aria-label="Tipo di nonio"></div></div>
+      <div class="field">
+        <label class="label" for="sim-input">Misura [mm]</label>
+        <div class="num-in"><input id="sim-input" type="text" inputmode="decimal" autocomplete="off"></div>
+        <input type="range" id="sim-range" min="0" max="3000" step="1" aria-label="Posizione del cursore">
+        <div class="btn-row">
+          <button class="btn" id="sim-m1" type="button">−1 mm</button>
+          <button class="btn" id="sim-mr" type="button">−r</button>
+          <button class="btn" id="sim-pr" type="button">+r</button>
+          <button class="btn" id="sim-p1" type="button">+1 mm</button>
+        </div>
+        <button class="btn" id="sim-rand" type="button">Misura casuale</button>
+      </div>
+      <label class="check"><input type="checkbox" id="sim-show" checked> Visualizza la misura</label>
+      <label class="check"><input type="checkbox" id="sim-hl" checked> Evidenzia zero e tratto coincidente</label>
+      <div class="field">
+        <label class="label" for="sim-zoom">Ingrandimento lente</label>
+        <input type="range" id="sim-zoom" min="1" max="5" step="0.25" value="1">
+        <label class="label" for="sim-pan">Posizione lente</label>
+        <input type="range" id="sim-pan" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <button class="btn" id="sim-fs" type="button">Schermo intero</button>
+    </div>
+
+    <div class="panel">
+      <div class="readout" id="sim-readout"></div>
+      <div class="chips" id="sim-chips"></div>
+      <div class="figure"><svg class="cal drag" id="sim-over" role="img" aria-label="Calibro completo: trascina per spostare il cursore"></svg></div>
+      <div class="lens-box"><svg id="sim-lens" role="img" aria-label="Lente di ingrandimento sulla zona di lettura" preserveAspectRatio="xMidYMid meet"></svg><span class="lens-tag" id="sim-lens-tag">Lente</span></div>
+      <div class="legend"><span><i style="background:var(--cal-zero)"></i>Zero del nonio e mm interi</span><span><i style="background:var(--cal-mark)"></i>Tratti coincidenti</span><span>Tastiera: ← → passo r, Maiusc + ← → 1 mm</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 4: ESERCITAZIONE ===================== -->
+<section class="view" id="view-esercizio" hidden>
+  <div class="intro">
+    <span class="eyebrow">Esercitazione di lettura</span>
+    <h2>Leggi la misura</h2>
+    <p class="lead">Il programma genera una misura casuale. Leggila sul calibro, scrivila in millimetri e verifica. Dopo la verifica compare la soluzione commentata.</p>
+  </div>
+
+  <div class="sim">
+    <div class="panel controls">
+      <div class="field"><span class="label">Livello</span><div class="seg grid" id="ex-level" role="group" aria-label="Livello"></div></div>
+      <p class="lead" id="ex-level-desc" style="font-size:.9rem"></p>
+      <label class="check"><input type="checkbox" id="ex-pezzi" checked> Misura su pezzi meccanici</label>
+      <div class="field"><span class="label">Risoluzione (personalizzato)</span><div class="seg" id="ex-n" role="group" aria-label="Risoluzione personalizzata"></div></div>
+      <div class="field"><span class="label">Tipo (personalizzato)</span><div class="seg" id="ex-g" role="group" aria-label="Tipo personalizzato"></div></div>
+      <form class="field" id="ex-form" autocomplete="off">
+        <label class="label" for="ex-answer">La tua lettura [mm]</label>
+        <div class="num-in"><input id="ex-answer" type="text" inputmode="decimal" placeholder="es. 23,35"></div>
+        <div class="btn-row">
+          <button class="btn primary" type="submit" id="ex-check">Verifica</button>
+          <button class="btn" type="button" id="ex-hint">Suggerimento</button>
+        </div>
+        <button class="btn" type="button" id="ex-new">Nuova misura</button>
+      </form>
+      <div class="field">
+        <label class="label" for="ex-zoom">Ingrandimento lente</label>
+        <input type="range" id="ex-zoom" min="1" max="5" step="0.25" value="1">
+        <label class="label" for="ex-pan">Posizione lente</label>
+        <input type="range" id="ex-pan" min="0" max="1" step="0.01" value="0.5">
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="score" id="ex-score"></div>
+      <div class="chips" id="ex-chips"></div>
+      <div class="pezzo" id="ex-pezzo" hidden></div>
+      <div class="figure"><svg class="cal" id="ex-over" role="img" aria-label="Calibro dell'esercizio"></svg></div>
+      <div class="lens-box"><svg id="ex-lens" role="img" aria-label="Lente sulla zona di lettura dell'esercizio" preserveAspectRatio="xMidYMid meet"></svg><span class="lens-tag" id="ex-lens-tag">Lente</span></div>
+      <div id="ex-feedback"></div>
+      <div class="table-wrap"><table id="ex-hist"></table></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* =====================================================================
+   PROGRAMMA – SIMULATORE DI CALIBRO A NONIO
+   Unità di misura interne: tutte le coordinate del disegno sono in mm.
+   Convenzione SVG: asse x verso destra, asse y verso il basso.
+   La misura è memorizzata come numero intero N di "passi" di risoluzione:
+   M = N / n  [mm]  → si evitano gli errori di arrotondamento dei decimali.
+   ===================================================================== */
+
+// ---------- COSTANTI GENERALI ----------
+const CAMPO = 150;                       // campo di misura del calibro [mm]
+const Y_SCALA = 10;                      // quota del bordo tra scala dell'asta e scala del nonio [mm]
+const NONI_N = [10, 20, 50];             // numeri di divisioni disponibili: 1/10, 1/20, 1/50
+const NONI_G = [1, 2];                   // modulo: 1 = nonio semplice, 2 = nonio doppio
+const NOME_G = { 1: "Semplice", 2: "Doppio" };   // etichette dei due tipi di nonio
+
+// ---------- FUNZIONI DI CALCOLO ----------
+
+// Restituisce le grandezze caratteristiche di un nonio con n divisioni e modulo g
+function spec(n, g) {
+  const r = 1 / n;                       // risoluzione r = p/n con p = 1 mm
+  const L = g * n - 1;                   // lunghezza del nonio L = (g·n − 1)·p
+  const d = L / n;                       // ampiezza di una divisione del nonio d = L/n
+  return { n, g, r, L, d };              // oggetto con tutti i dati del nonio
+}
+
+// Numero di cifre decimali con cui scrivere una misura (0,1 → 1 cifra; 0,05 e 0,02 → 2 cifre)
+function decimali(n) {
+  return n === 10 ? 1 : 2;               // con il nonio 1/10 basta un decimale
+}
+
+// Formatta un numero in stile italiano (virgola decimale) con le cifre adatte al nonio
+function fmt(x, n) {
+  return x.toFixed(decimali(n)).replace(".", ",");   // toFixed arrotonda, poi punto → virgola
+}
+
+// Scompone la misura N (in passi) nei mm interi I e nel tratto coincidente k
+function lettura(N, n) {
+  const I = Math.floor(N / n);           // millimetri interi letti sull'asta
+  const k = N - I * n;                   // resto: numero del tratto del nonio che coincide
+  return { I, k };                       // restituisce entrambe le parti
+}
+
+// Fine della graduazione dell'asta: deve contenere il campo più la lunghezza del nonio
+function fineScala(s) {
+  return Math.ceil((CAMPO + s.L + 6) / 10) * 10;   // arrotondata alla decina superiore
+}
+
+// Converte un testo scritto dall'utente ("23,35", "23.35 mm") in numero; NaN se non valido
+function leggiNumero(txt) {
+  const pulito = String(txt).trim().replace(/mm$/i, "").trim().replace(",", ".");  // toglie "mm" e usa il punto
+  if (!/^\d+(\.\d+)?$/.test(pulito)) return NaN;   // accetta solo cifre con eventuale parte decimale
+  return parseFloat(pulito);             // conversione in numero
+}
+
+// Limita un valore tra un minimo e un massimo
+function limita(v, min, max) {
+  return Math.max(min, Math.min(max, v));          // restituisce v "schiacciato" nell'intervallo
+}
+
+// Numero intero casuale tra a e b inclusi
+function casuale(a, b) {
+  return a + Math.floor(Math.random() * (b - a + 1));   // Math.random() ∈ [0,1)
+}
+
+// ---------- DISEGNO DEL CALIBRO (genera il codice SVG come testo) ----------
+// o = { n, g, N, uid, zero, coinc, richiami }
+//   uid      : prefisso unico per gli id dei gradienti (un disegno per ogni SVG)
+//   zero     : true → evidenzia zero del nonio e tratto dei mm interi
+//   coinc    : true → evidenzia i tratti coincidenti
+//   richiami : true → aggiunge i numeri delle parti (disegno dello strumento)
+function disegnaCalibro(o) {
+  const s = spec(o.n, o.g);              // dati del nonio scelto
+  const M = o.N / o.n;                   // misura in mm = posizione del becco mobile
+  const { I, k } = lettura(o.N, o.n);    // parte intera e tratto coincidente
+  const SE = fineScala(s);               // ultimo mm graduato sull'asta
+  const BE = SE + 14;                    // estremità destra dell'asta
+  const u = o.uid;                       // prefisso per gli id
+  const R = M + s.L;                     // posizione dell'ultimo tratto del nonio
+  let h = "";                            // stringa che conterrà tutto il disegno
+
+  // --- Gradienti che simulano l'acciaio satinato ---
+  h += `<defs>
+    <linearGradient id="${u}-asta" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--steel-hi)"/><stop offset=".55" stop-color="var(--steel-mid)"/><stop offset="1" stop-color="var(--steel-lo)"/>
+    </linearGradient>
+    <linearGradient id="${u}-cur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--steel-mid)"/><stop offset=".35" stop-color="var(--steel-hi)"/><stop offset="1" stop-color="var(--steel-lo)"/>
+    </linearGradient>
+    <linearGradient id="${u}-becco" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="var(--steel-lo)"/><stop offset=".5" stop-color="var(--steel-hi)"/><stop offset="1" stop-color="var(--steel-mid)"/>
+    </linearGradient>
+  </defs>`;
+
+  const bordo = `stroke="var(--steel-edge)" stroke-width="1" vector-effect="non-scaling-stroke"`;   // contorno sottile costante
+
+  // --- Asta di profondità: esce dall'estremità dell'asta per una lunghezza pari alla misura M ---
+  h += `<rect x="${BE - 2}" y="7.3" width="${M + 2}" height="1.5" fill="url(#${u}-becco)" ${bordo}/>`;
+
+  // --- Becco fisso per esterni (sotto l'asta, faccia di misura a x = 0) ---
+  h += `<path d="M 0 16 L 0 56 L -1.6 62 L -7 62 L -15 36 L -24 27 L -24 16 Z" fill="url(#${u}-becco)" ${bordo}/>`;
+  // --- Becco fisso per interni (sopra l'asta, punta a coltello) ---
+  h += `<path d="M -22 0 L -5 0 L 2.4 -19 L 2.4 -26 L 0 -26 L -0.4 -19 L -22 -7 Z" fill="url(#${u}-becco)" ${bordo}/>`;
+
+  // --- Asta graduata ---
+  h += `<rect x="-24" y="0" width="${BE + 24}" height="16" rx="0.8" fill="url(#${u}-asta)" ${bordo}/>`;
+  // Testa dell'asta (zona del becco fisso, leggermente più scura)
+  h += `<rect x="-24" y="0" width="22" height="16" fill="var(--steel-lo)" opacity=".35"/>`;
+
+  // --- Scala principale: un tratto per ogni millimetro ---
+  let tr = "";                           // tratti della scala
+  let nu = "";                           // numeri della scala
+  for (let i = 0; i <= SE; i++) {        // da 0 alla fine della graduazione
+    const lung = i % 10 === 0 ? 5.2 : (i % 5 === 0 ? 3.9 : 2.7);   // tratti lunghi ogni 10 mm, medi ogni 5
+    tr += `M ${i} ${Y_SCALA} V ${Y_SCALA - lung} `;               // segmento verticale dal bordo verso l'alto
+    if (i % 10 === 0) {                  // ogni centimetro
+      nu += `<text x="${i}" y="4.1" font-size="3" text-anchor="middle" fill="var(--engrave)">${i / 10}</text>`;  // numero in cm
+    }
+  }
+  h += `<path d="${tr}" stroke="var(--engrave)" stroke-width="0.14" fill="none"/>`;   // disegna tutti i tratti in un'unica path
+  h += nu;                               // aggiunge i numeri
+  h += `<text x="-12" y="9.4" font-size="2.4" text-anchor="middle" fill="var(--engrave)">mm</text>`;   // unità sulla testa
+
+  // --- Becco mobile per esterni (solidale al cursore, faccia di misura a x = M) ---
+  h += `<path d="M ${M} 16 L ${M} 56 L ${M + 1.6} 62 L ${M + 7} 62 L ${M + 15} 36 L ${M + 24} 27 L ${M + 24} 16 Z" fill="url(#${u}-becco)" ${bordo}/>`;
+  // --- Becco mobile per interni ---
+  h += `<path d="M ${M + 22} -4 L ${M + 5} -4 L ${M - 2.4} -19 L ${M - 2.4} -26 L ${M} -26 L ${M + 0.4} -19 L ${M + 22} -9 Z" fill="url(#${u}-becco)" ${bordo}/>`;
+
+  // --- Cursore: telaio con finestra da cui si vede la scala dell'asta ---
+  h += `<rect x="${M - 16}" y="-4" width="${s.L + 36}" height="4.6" rx="0.6" fill="url(#${u}-cur)" ${bordo}/>`;  // traversa superiore (da blocco sinistro a blocco destro)
+  h += `<rect x="${M - 16}" y="-4" width="14" height="26" rx="1" fill="url(#${u}-cur)" ${bordo}/>`;            // blocco sinistro, uguale al destro
+  h += `<rect x="${R + 6}" y="-4" width="14" height="26" rx="1" fill="url(#${u}-cur)" ${bordo}/>`;              // blocco destro
+  h += `<rect x="${M - 2}" y="${Y_SCALA}" width="${s.L + 8.2}" height="12" fill="url(#${u}-cur)" ${bordo}/>`;     // piastrina del nonio
+  h += `<text x="${R + 13}" y="9" font-size="2.3" text-anchor="middle" fill="var(--engrave)">1/${s.n}</text>`;   // risoluzione incisa sul cursore
+  h += `<text x="${R + 13}" y="12.4" font-size="1.9" text-anchor="middle" fill="var(--engrave)">${fmt(s.r, s.n)}</text>`;  // risoluzione in mm
+
+  // --- Vite di bloccaggio (zigrinata) ---
+  h += `<rect x="${R + 9}" y="-9" width="8" height="5.2" rx="1" fill="url(#${u}-becco)" ${bordo}/>`;
+  let zig = "";                          // righe della zigrinatura
+  for (let x = R + 10; x < R + 16.5; x += 1) zig += `M ${x} -8.4 V -4.4 `;   // una riga ogni mm
+  h += `<path d="${zig}" stroke="var(--steel-edge)" stroke-width="0.25" fill="none"/>`;
+
+  // --- Rotella per il pollice ---
+  h += `<rect x="${R + 8}" y="22" width="9.5" height="3.8" rx="1.4" fill="url(#${u}-becco)" ${bordo}/>`;
+  let rot = "";                          // denti della rotella
+  for (let x = R + 9; x < R + 17; x += 1) rot += `M ${x} 22.4 V 25.4 `;
+  h += `<path d="${rot}" stroke="var(--steel-edge)" stroke-width="0.25" fill="none"/>`;
+
+  // --- Evidenziazioni (disegnate sotto i tratti del nonio) ---
+  const coincidenti = k === 0 ? [0, s.n] : [k];   // se k = 0 coincidono sia il primo sia l'ultimo tratto
+  if (o.coinc) {                                   // fasce colorate sui tratti coincidenti
+    for (const j of coincidenti) {
+      const x = Math.round(M + j * s.d);           // posizione del tratto dell'asta coincidente (intero)
+      h += `<rect x="${x - 0.45}" y="4" width="0.9" height="14.5" fill="var(--cal-mark-soft)"/>`;
+    }
+  }
+
+  // --- Scala del nonio (n + 1 tratti incisi sulla piastrina) ---
+  let tv = "";                           // tratti del nonio
+  let nv = "";                           // numeri del nonio
+  const perDecimo = s.n / 10;            // tratti del nonio che corrispondono a 0,1 mm
+  let m = 1;                             // numerazione ogni m decimi di mm
+  for (const c of [1, 2, 5, 10]) {       // sceglie il passo più fitto con numeri distanti almeno 2,6 mm
+    m = c;
+    if (c * perDecimo * s.d >= 2.6) break;
+  }
+  for (let j = 0; j <= s.n; j++) {
+    const x = M + j * s.d;               // posizione del tratto j: M + j·d
+    const decimo = j % perDecimo === 0;            // il tratto corrisponde a un decimo di mm
+    const conNumero = decimo && (j / perDecimo) % m === 0;   // numerato solo ogni m decimi
+    const lung = conNumero ? 3.6 : (decimo ? 3 : 2.5);       // numerati lunghi, decimi medi, altri corti
+    tv += `M ${x} ${Y_SCALA} V ${Y_SCALA + lung} `;   // segmento verso il basso dal bordo
+    if (conNumero) {
+      nv += `<text x="${x}" y="17" font-size="2.4" text-anchor="middle" fill="var(--engrave)">${(j * 10) / s.n}</text>`;   // numero in decimi
+    }
+  }
+  h += `<path d="${tv}" stroke="var(--engrave)" stroke-width="0.12" fill="none"/>`;
+  h += nv;
+
+  // --- Tratti evidenziati (sopra a quelli normali) ---
+  if (o.zero) {
+    h += `<path d="M ${M} ${Y_SCALA} V ${Y_SCALA + 3.6}" stroke="var(--cal-zero)" stroke-width="0.32"/>`;    // zero del nonio
+    h += `<path d="M ${I} ${Y_SCALA} V ${Y_SCALA - 5.4}" stroke="var(--cal-zero)" stroke-width="0.32"/>`;    // tratto dei mm interi
+    h += `<path d="M ${I} 1.6 L ${I - 0.9} 0.3 L ${I + 0.9} 0.3 Z" fill="var(--cal-zero)"/>`;                 // freccina sopra il tratto I
+  }
+  if (o.coinc) {
+    for (const j of coincidenti) {
+      const xn = M + j * s.d;                      // tratto j del nonio
+      const xa = Math.round(xn);                   // tratto dell'asta allineato
+      h += `<path d="M ${xn} ${Y_SCALA} V ${Y_SCALA + 3.6}" stroke="var(--cal-mark)" stroke-width="0.32"/>`;
+      h += `<path d="M ${xa} ${Y_SCALA} V ${Y_SCALA - 3}" stroke="var(--cal-mark)" stroke-width="0.32"/>`;
+    }
+  }
+
+  // --- Richiami numerati delle parti (solo nel disegno descrittivo) ---
+  if (o.richiami) h += richiami(M, s, BE);
+  return h;                              // restituisce il codice SVG completo
+}
+
+// Posizioni dei richiami: [numero, punto del cerchio, punti indicati]
+function richiami(M, s, BE) {
+  const R = M + s.L;                     // fine del nonio
+  const xa = (R + 20 + BE) / 2;          // un punto dell'asta visibile a destra del cursore
+  const lista = [
+    [1, [M / 2, 74], [[-3, 47], [M + 3, 47]]],      // becchi per esterni
+    [2, [M / 2, -38], [[1.2, -23], [M - 1.2, -23]]], // becchi per interni
+    [3, [xa, -16], [[xa, 6]]],                       // asta graduata
+    [4, [R + 30, -20], [[R + 19, -2]]],              // cursore
+    [5, [M + s.L / 2, 38], [[M + s.L / 2, 15]]],     // nonio
+    [6, [R + 13, -24], [[R + 13, -9]]],              // vite di bloccaggio
+    [7, [BE + M / 2, -14], [[BE + M / 2, 8]]],       // asta di profondità
+    [8, [R + 12.7, 40], [[R + 12.7, 25.5]]],         // rotella
+  ];
+  let h = "";                            // codice dei richiami
+  for (const [num, c, punti] of lista) {
+    h += `<g class="co" data-n="${num}">`;           // gruppo identificato dal numero della parte
+    for (const p of punti) h += `<line x1="${c[0]}" y1="${c[1]}" x2="${p[0]}" y2="${p[1]}"/><circle cx="${p[0]}" cy="${p[1]}" r="0.9"/>`;   // linea di richiamo e pallino
+    h += `<circle cx="${c[0]}" cy="${c[1]}" r="4.4"/><text x="${c[0]}" y="${c[1] + 1.7}" font-size="5" text-anchor="middle">${num}</text></g>`;  // cerchio con numero
+  }
+  return h;
+}
+
+// ---------- RIQUADRO DELLA LENTE ----------
+// Calcola la porzione di disegno (viewBox) da mostrare nella lente
+function riquadroLente(n, g, N, zoom, pan, svg) {
+  const s = spec(n, g);                  // dati del nonio
+  const M = N / n;                       // posizione del cursore
+  const cw = svg.clientWidth || 800;     // larghezza reale della lente in pixel
+  const ch = svg.clientHeight || 300;    // altezza reale della lente in pixel
+  const W0 = Math.max(s.L + 20, 60);     // larghezza inquadrata senza ingrandimento [mm]
+  const W = W0 / zoom;                   // larghezza inquadrata con l'ingrandimento scelto
+  const x0 = M + s.L / 2 - W0 / 2;       // inquadratura centrata sul nonio
+  const x = x0 + pan * (W0 - W);         // spostamento orizzontale scelto con "Posizione lente"
+  const H = W * ch / cw;                 // altezza proporzionata alla forma della lente
+  const y = 10.6 - H / 2;                // centrata sul bordo asta/nonio
+  return { x, y, w: W, h: H };           // rettangolo del viewBox
+}
+
+// Disegna vista completa + lente in due SVG (usato da simulatore ed esercitazione)
+function disegnaCoppia(svgOver, svgLens, st, uid, zero, coinc) {
+  const s = spec(st.n, st.g);            // dati del nonio
+  const BE = fineScala(s) + 14;          // estremità dell'asta
+  const corpo = disegnaCalibro({ n: st.n, g: st.g, N: st.N, uid: uid + "o", zero, coinc });   // calibro per la vista completa
+  const lb = riquadroLente(st.n, st.g, st.N, st.zoom, st.pan, svgLens);                      // zona ingrandita
+  svgOver.setAttribute("viewBox", `-30 -34 ${BE + 56} 102`);   // inquadra tutto il calibro
+  svgOver.innerHTML = corpo +            // disegno + rettangolo tratteggiato che indica la zona della lente
+    `<rect x="${lb.x}" y="${lb.y}" width="${lb.w}" height="${lb.h}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3" vector-effect="non-scaling-stroke"/>`;
+  svgLens.setAttribute("viewBox", `${lb.x} ${lb.y} ${lb.w} ${lb.h}`);   // la lente mostra solo quella zona
+  svgLens.innerHTML = disegnaCalibro({ n: st.n, g: st.g, N: st.N, uid: uid + "l", zero, coinc });
+}
+
+// Crea i pulsanti di un selettore a segmenti
+function creaSegmenti(contenitore, valori, etichetta, alClic) {
+  contenitore.innerHTML = "";            // svuota il contenitore
+  for (const v of valori) {
+    const b = document.createElement("button");   // nuovo pulsante
+    b.type = "button";                   // non invia moduli
+    b.textContent = etichetta(v);        // testo del pulsante
+    b.dataset.v = String(v);             // valore memorizzato nel pulsante
+    b.addEventListener("click", () => alClic(v));   // azione al clic
+    contenitore.appendChild(b);          // aggiunge il pulsante
+  }
+}
+
+// Evidenzia il pulsante attivo di un selettore a segmenti
+function segnaAttivo(contenitore, valore) {
+  for (const b of contenitore.querySelectorAll("button")) {
+    b.setAttribute("aria-pressed", String(b.dataset.v === String(valore)));   // true solo per il pulsante scelto
+  }
+}
+
+// Etichette "chip" con le caratteristiche del nonio
+function chipNonio(s) {
+  return `<span class="chip"><b>Nonio</b> 1/${s.n} ${NOME_G[s.g].toLowerCase()}</span>` +
+    `<span class="chip"><b>r</b> ${fmt(s.r, s.n)} mm</span>` +
+    `<span class="chip"><b>L</b> ${s.L} mm</span>` +
+    `<span class="chip"><b>d</b> ${String(+s.d.toFixed(3)).replace(".", ",")} mm</span>` +
+    `<span class="chip"><b>Divisioni</b> ${s.n}</span>`;
+}
+
+// Trascinamento orizzontale su un SVG: richiama cb(spostamento in mm) a ogni movimento
+function abilitaTrascinamento(svg, inizio, cb) {
+  let x0 = null;                         // posizione iniziale del puntatore (px); null = nessun trascinamento
+  let mmPerPx = 1;                       // fattore di conversione pixel → mm
+  svg.addEventListener("pointerdown", (e) => {
+    const vb = svg.viewBox.baseVal;      // dimensioni del disegno in mm
+    mmPerPx = vb.width / svg.getBoundingClientRect().width;   // mm rappresentati da un pixel
+    x0 = e.clientX;                      // memorizza il punto di partenza
+    inizio();                            // memorizza la misura di partenza
+    svg.setPointerCapture(e.pointerId);  // continua a ricevere eventi anche fuori dal disegno
+  });
+  svg.addEventListener("pointermove", (e) => {
+    if (x0 === null) return;             // nessun trascinamento in corso
+    cb((e.clientX - x0) * mmPerPx);      // spostamento in mm
+  });
+  const fine = () => { x0 = null; };     // fine del trascinamento
+  svg.addEventListener("pointerup", fine);
+  svg.addEventListener("pointercancel", fine);
+}
+
+// =====================================================================
+// VISTA 1 – LO STRUMENTO
+// =====================================================================
+const PARTI = [                          // [nome, descrizione] nell'ordine dei richiami
+  ["Becchi per esterni", "Fisso e mobile: serrano il pezzo per misurare diametri esterni, spessori e lunghezze."],
+  ["Becchi per interni", "A coltello: si aprono dentro fori e cave per misurare diametri interni e larghezze."],
+  ["Asta graduata", "Porta la scala principale in mm; lo zero coincide con il becco fisso. Dà i millimetri interi."],
+  ["Cursore (corsoio)", "Scorre sull'asta e porta il becco mobile, il nonio e l'asta di profondità."],
+  ["Nonio", "Scala ausiliaria incisa sul cursore: dà la parte decimale con la risoluzione dello strumento."],
+  ["Vite di bloccaggio", "Blocca il cursore per leggere la misura dopo aver tolto lo strumento dal pezzo."],
+  ["Asta di profondità", "Esce dall'estremità dell'asta: misura profondità di fori, cave e gradini."],
+  ["Rotella per il pollice", "Muove il cursore con una pressione leggera e costante."],
+];
+
+function initStrumento() {
+  const svg = document.getElementById("svg-parts");          // disegno descrittivo
+  const st = { n: 20, g: 2, N: 40 * 20 };                    // esempio: nonio 1/20 doppio aperto a 40 mm
+  const s = spec(st.n, st.g);                                // dati del nonio
+  const BE = fineScala(s) + 14;                              // estremità dell'asta
+  svg.setAttribute("viewBox", `-30 -46 ${BE + 40 + 44} 128`); // spazio per asta di profondità e richiami
+  svg.innerHTML = disegnaCalibro({ ...st, uid: "p", zero: false, coinc: false, richiami: true });
+  const ul = document.getElementById("parts-list");          // elenco delle parti
+  ul.innerHTML = PARTI.map((p, i) =>
+    `<li data-n="${i + 1}"><span class="num">${i + 1}</span><div><b>${p[0]}</b><span>${p[1]}</span></div></li>`).join("");
+  const accendi = (num, on) => {                             // evidenzia voce e richiamo con lo stesso numero
+    svg.querySelector(`.co[data-n="${num}"]`)?.classList.toggle("on", on);
+    ul.querySelector(`li[data-n="${num}"]`)?.classList.toggle("on", on);
+  };
+  for (const li of ul.children) {                            // passaggio del mouse sull'elenco
+    li.addEventListener("mouseenter", () => accendi(li.dataset.n, true));
+    li.addEventListener("mouseleave", () => accendi(li.dataset.n, false));
+  }
+  for (const g of svg.querySelectorAll(".co")) {             // passaggio del mouse sui richiami
+    g.addEventListener("mouseenter", () => accendi(g.dataset.n, true));
+    g.addEventListener("mouseleave", () => accendi(g.dataset.n, false));
+  }
+}
+
+// =====================================================================
+// VISTA 2 – IL NONIO
+// =====================================================================
+const PR = { n: 10, g: 1, k: 1 };        // stato della figura del principio
+
+function disegnaPrincipio() {
+  const s = spec(PR.n, PR.g);            // nonio scelto
+  const svg = document.getElementById("svg-principle");
+  const W = Math.max(s.L + 16, 60);                         // larghezza inquadrata (minimo 60 mm per non ingrandire troppo)
+  svg.setAttribute("viewBox", `${s.L / 2 - W / 2 + 2} -1 ${W} 20`);   // inquadra asta e nonio, centrati
+  svg.innerHTML = disegnaCalibro({ n: PR.n, g: PR.g, N: PR.k, uid: "pr", zero: true, coinc: true });
+  const sp = PR.k * s.r;                 // spostamento del cursore in mm
+  const xa = PR.k === 0 ? 0 : PR.k * PR.g;   // tratto dell'asta che coincide (k·g mm)
+  document.getElementById("pr-text").innerHTML = PR.k === 0
+    ? `Cursore chiuso (0 mm): lo zero del nonio coincide con lo zero dell'asta e l'ultimo tratto (${s.n}) coincide con il tratto dei ${s.L} mm.`
+    : `Spostamento = k · r = ${PR.k} · ${fmt(s.r, s.n)} = <b>${fmt(sp, s.n)} mm</b>. Coincide il tratto <b>${PR.k}</b> del nonio con il tratto dei <b>${xa} mm</b> dell'asta (k · γ = ${PR.k} · ${PR.g}).`;
+}
+
+function initNonio() {
+  const seg = document.getElementById("pr-nonio");         // selettore dei 6 noni
+  const chiavi = [];                                        // combinazioni n-g
+  for (const n of NONI_N) for (const g of NONI_G) chiavi.push(`${n}-${g}`);
+  creaSegmenti(seg, chiavi, (c) => { const [n, g] = c.split("-"); return `1/${n}${g === "2" ? " D" : ""}`; }, (c) => {
+    const [n, g] = c.split("-").map(Number);               // legge n e g dalla chiave
+    PR.n = n; PR.g = g;                                     // aggiorna lo stato
+    const rng = document.getElementById("pr-k");
+    rng.max = String(n);                                    // k va da 0 a n
+    PR.k = Math.min(PR.k, n);                               // k non può superare n
+    rng.value = String(PR.k);
+    segnaAttivo(seg, c);                                    // evidenzia il pulsante
+    disegnaPrincipio();                                     // ridisegna
+  });
+  seg.setAttribute("title", "D = nonio doppio");
+  const rng = document.getElementById("pr-k");
+  rng.max = "10";                                           // nonio iniziale 1/10
+  rng.addEventListener("input", () => { PR.k = +rng.value; disegnaPrincipio(); });
+  segnaAttivo(seg, "10-1");
+  disegnaPrincipio();
+
+  // Tabella riassuntiva dei 6 noni
+  let t = "<thead><tr><th>Nonio</th><th>Tipo</th><th>n</th><th>r [mm]</th><th>L [mm]</th><th>d [mm]</th></tr></thead><tbody>";
+  for (const n of NONI_N) for (const g of NONI_G) {
+    const s = spec(n, g);                                   // dati del nonio
+    t += `<tr><td class="mono">1/${n}</td><td>${NOME_G[g]}</td><td class="mono">${n}</td><td class="mono">${fmt(s.r, n)}</td><td class="mono">${s.L}</td><td class="mono">${String(+s.d.toFixed(3)).replace(".", ",")}</td></tr>`;
+  }
+  document.getElementById("nonio-table").innerHTML = t + "</tbody>";
+
+  // Figura dell'esempio di lettura: 23,35 mm con nonio 1/20 doppio
+  const ex = document.getElementById("svg-example");
+  const N = 467;                                            // 23,35 mm × 20 = 467 passi
+  const M = N / 20;                                         // 23,35 mm
+  ex.setAttribute("viewBox", `${M - 12} -1 ${39 + 34} 20`); // inquadra la zona di lettura
+  ex.innerHTML = disegnaCalibro({ n: 20, g: 2, N, uid: "ex", zero: true, coinc: true });
+}
+
+// =====================================================================
+// VISTA 3 – SIMULATORE
+// =====================================================================
+const SIM = { n: 20, g: 2, N: 467, zoom: 1, pan: 0.5, show: true, hl: true };   // stato iniziale: 23,35 mm
+const $ = (id) => document.getElementById(id);             // scorciatoia per cercare un elemento
+
+function disegnaSimulatore() {
+  const s = spec(SIM.n, SIM.g);          // dati del nonio
+  SIM.N = limita(SIM.N, 0, CAMPO * SIM.n);   // la misura resta nel campo 0–150 mm
+  const M = SIM.N / SIM.n;               // misura in mm
+  const { I, k } = lettura(SIM.N, SIM.n);    // lettura scomposta
+  segnaAttivo($("sim-n"), SIM.n);        // aggiorna i selettori
+  segnaAttivo($("sim-g"), SIM.g);
+  $("sim-range").max = String(CAMPO * SIM.n);   // il cursore di regolazione lavora in passi r
+  $("sim-range").value = String(SIM.N);
+  if (document.activeElement !== $("sim-input")) $("sim-input").value = fmt(M, SIM.n);   // non sovrascrive mentre si scrive
+  $("sim-mr").textContent = `−${fmt(s.r, s.n)}`;    // pulsanti con il passo reale
+  $("sim-pr").textContent = `+${fmt(s.r, s.n)}`;
+  $("sim-readout").innerHTML = SIM.show            // lettura visibile o nascosta
+    ? `<div class="big">${fmt(M, SIM.n)} <small>mm</small></div><div class="why">Asta: <b>${I} mm</b> · Nonio: tratto <b>${k}</b> × ${fmt(s.r, s.n)} = <b>${fmt(k * s.r, s.n)} mm</b></div>`
+    : `<div class="big">–– , –– <small>mm</small></div><div class="why">Misura nascosta: falla leggere alla classe.</div>`;
+  $("sim-chips").innerHTML = chipNonio(s);         // caratteristiche del nonio
+  $("sim-lens-tag").textContent = `Lente ×${SIM.zoom.toFixed(2).replace(".", ",")}`;
+  disegnaCoppia($("sim-over"), $("sim-lens"), SIM, "s", SIM.hl, SIM.hl);   // disegni
+}
+
+// Cambia nonio mantenendo la misura il più vicino possibile
+function cambiaNonioSim(n, g) {
+  const M = SIM.N / SIM.n;               // misura attuale in mm
+  SIM.n = n; SIM.g = g;                  // nuovo nonio
+  SIM.N = Math.round(M * n);             // stessa misura arrotondata al nuovo passo
+  disegnaSimulatore();
+}
+
+function initSimulatore() {
+  creaSegmenti($("sim-n"), NONI_N, (n) => `1/${n}`, (n) => cambiaNonioSim(n, SIM.g));   // pulsanti 1/10, 1/20, 1/50
+  creaSegmenti($("sim-g"), NONI_G, (g) => NOME_G[g], (g) => cambiaNonioSim(SIM.n, g));  // pulsanti semplice/doppio
+  $("sim-m1").addEventListener("click", () => { SIM.N -= SIM.n; disegnaSimulatore(); });   // −1 mm = −n passi
+  $("sim-p1").addEventListener("click", () => { SIM.N += SIM.n; disegnaSimulatore(); });   // +1 mm
+  $("sim-mr").addEventListener("click", () => { SIM.N -= 1; disegnaSimulatore(); });       // −r = −1 passo
+  $("sim-pr").addEventListener("click", () => { SIM.N += 1; disegnaSimulatore(); });       // +r
+  $("sim-rand").addEventListener("click", () => { SIM.N = casuale(0, CAMPO * SIM.n); disegnaSimulatore(); });
+  $("sim-range").addEventListener("input", (e) => { SIM.N = +e.target.value; disegnaSimulatore(); });
+  $("sim-input").addEventListener("change", (e) => {        // misura scritta a mano
+    const v = leggiNumero(e.target.value);                  // conversione del testo
+    if (!isNaN(v)) SIM.N = Math.round(v * SIM.n);          // arrotonda al passo del nonio
+    e.target.blur();                                        // esce dalla casella
+    disegnaSimulatore();
+  });
+  $("sim-show").addEventListener("change", (e) => { SIM.show = e.target.checked; disegnaSimulatore(); });
+  $("sim-hl").addEventListener("change", (e) => { SIM.hl = e.target.checked; disegnaSimulatore(); });
+  $("sim-zoom").addEventListener("input", (e) => { SIM.zoom = +e.target.value; disegnaSimulatore(); });
+  $("sim-pan").addEventListener("input", (e) => { SIM.pan = +e.target.value; disegnaSimulatore(); });
+
+  let N0 = 0;                                               // misura all'inizio del trascinamento
+  abilitaTrascinamento($("sim-over"), () => { N0 = SIM.N; }, (dmm) => {
+    SIM.N = Math.round((N0 / SIM.n + dmm) * SIM.n);         // nuova posizione arrotondata al passo
+    disegnaSimulatore();
+  });
+
+  document.addEventListener("keydown", (e) => {             // frecce della tastiera
+    if (location.hash !== "#simulatore") return;            // solo nella vista simulatore
+    if (e.target.tagName === "INPUT" && e.target.type === "text") return;   // non mentre si scrive
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const passo = e.shiftKey ? SIM.n : 1;                   // Maiusc → 1 mm, altrimenti r
+    SIM.N += e.key === "ArrowRight" ? passo : -passo;
+    e.preventDefault();                                     // evita lo scorrimento della pagina
+    disegnaSimulatore();
+  });
+
+  const fs = $("sim-fs");                                   // schermo intero (utile alla LIM)
+  if (!document.fullscreenEnabled) fs.hidden = true;        // nasconde il pulsante se non disponibile
+  fs.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else $("sim-root").requestFullscreen?.().catch(() => { fs.hidden = true; });   // se rifiutato, nasconde il pulsante
+  });
+  document.addEventListener("fullscreenchange", () => {
+    fs.textContent = document.fullscreenElement ? "Esci da schermo intero" : "Schermo intero";
+    requestAnimationFrame(disegnaSimulatore);               // ricalcola la lente con le nuove dimensioni
+  });
+}
+
+// =====================================================================
+// VISTA 4 – ESERCITAZIONE
+// =====================================================================
+const LIVELLI = {                        // definizione dei livelli di difficoltà
+  base: { nome: "Base", desc: "Nonio 1/10 semplice: tratti ben distinti, risoluzione 0,1 mm." },
+  inter: { nome: "Intermedio", desc: "Nonio 1/20 semplice o doppio, scelto a caso: risoluzione 0,05 mm." },
+  avanz: { nome: "Avanzato", desc: "Nonio 1/50 semplice o doppio, oppure 1/10 e 1/20 doppi: risoluzione fino a 0,02 mm." },
+  pers: { nome: "Personalizzato", desc: "Scegli tu risoluzione e tipo di nonio con i selettori qui sotto." },
+};
+const EX = {                             // stato dell'esercitazione
+  livello: "base", n: 10, g: 1, N: 0, zoom: 1, pan: 0.5,
+  pn: 20, pg: 1,                         // scelta del livello personalizzato
+  risposto: false, aiuto: false,         // stato della domanda corrente
+  pezzi: true, pezzo: null,              // misura su pezzi meccanici (attiva) e pezzo corrente
+  tot: 0, giuste: 0, serie: 0,           // punteggio della sessione
+  storia: [], numero: 0,                 // elenco delle risposte
+};
+
+// Sceglie il nonio in base al livello
+function nonioPerLivello() {
+  if (EX.livello === "base") return [10, 1];                       // 1/10 semplice
+  if (EX.livello === "inter") return [20, casuale(1, 2)];          // 1/20 semplice o doppio
+  if (EX.livello === "avanz") {
+    const opz = [[50, 1], [50, 2], [20, 2], [10, 2]];              // combinazioni difficili
+    return opz[casuale(0, opz.length - 1)];
+  }
+  return [EX.pn, EX.pg];                                           // personalizzato
+}
+
+// Genera una nuova misura casuale
+function nuovaMisura() {
+  [EX.n, EX.g] = nonioPerLivello();      // nonio della domanda
+  if (EX.pezzi) {                        // misura su un pezzo meccanico
+    EX.pezzo = PEZZI_CAL[casuale(0, PEZZI_CAL.length - 1)];                          // pezzo casuale
+    EX.N = casuale(Math.ceil(EX.pezzo.min * EX.n), Math.floor(EX.pezzo.max * EX.n));  // quota nell'intervallo realistico del pezzo
+  } else {
+    EX.pezzo = null;                     // nessun pezzo
+    EX.N = casuale(2 * EX.n, CAMPO * EX.n);   // misura tra 2 mm e 150 mm
+  }
+  EX.risposto = false;                   // domanda aperta
+  EX.aiuto = false;                      // nessun suggerimento
+  EX.numero++;                           // numero progressivo dell'esercizio
+  $("ex-answer").value = "";             // svuota la risposta
+  const cosa = EX.pezzo ? `misura ${EX.pezzo.quota} del pezzo "${EX.pezzo.nome}"` : "leggi la misura";   // consegna
+  $("ex-feedback").innerHTML = `<div class="feedback info">Esercizio ${EX.numero}: ${cosa} e scrivila in mm con ${decimali(EX.n)} ${decimali(EX.n) === 1 ? "decimale" : "decimali"}.</div>`;
+  disegnaEsercizio();
+}
+
+function disegnaEsercizio() {
+  const s = spec(EX.n, EX.g);            // nonio dell'esercizio
+  segnaAttivo($("ex-level"), EX.livello);   // aggiorna i selettori
+  segnaAttivo($("ex-n"), EX.pn);
+  segnaAttivo($("ex-g"), EX.pg);
+  const pers = EX.livello === "pers";    // i selettori servono solo nel personalizzato
+  for (const b of $("ex-n").querySelectorAll("button")) b.disabled = !pers;
+  for (const b of $("ex-g").querySelectorAll("button")) b.disabled = !pers;
+  $("ex-level-desc").textContent = LIVELLI[EX.livello].desc;
+  const perc = EX.tot ? Math.round(100 * EX.giuste / EX.tot) : 0;   // percentuale di risposte corrette
+  $("ex-score").innerHTML = `<div><b>${EX.giuste}/${EX.tot}</b><span>Corrette</span></div><div><b>${perc}%</b><span>Precisione</span></div><div><b>${EX.serie}</b><span>Serie</span></div>`;
+  $("ex-chips").innerHTML = chipNonio(s);
+  $("ex-lens-tag").textContent = `Lente ×${EX.zoom.toFixed(2).replace(".", ",")}`;
+  $("ex-check").disabled = EX.risposto;  // una sola verifica per domanda
+  $("ex-hint").disabled = EX.risposto;
+  // Evidenziazioni: lo zero compare con il suggerimento o dopo la verifica; il tratto coincidente solo dopo la verifica
+  disegnaCoppia($("ex-over"), $("ex-lens"), EX, "e", EX.aiuto || EX.risposto, EX.risposto);
+  // Pezzo meccanico: disegnato sul calibro e descritto nella scheda
+  if (EX.pezzo) {
+    const over = $("ex-over");                                   // vista completa dell'esercizio
+    const BE = fineScala(s) + 14;                                // estremità dell'asta
+    const pz = pezzoSuCalibro(EX.pezzo, EX.N / EX.n, BE);        // disegno del pezzo con quota M
+    over.insertAdjacentHTML("afterbegin", pz.svg);               // il pezzo va dietro al calibro
+    const x0 = Math.min(-30, pz.xmin - 4);                       // allarga l'inquadratura se il pezzo esce
+    const x1 = Math.max(BE + 26, pz.xmax + 6);
+    const y1 = Math.max(68, pz.ymax + 4);
+    over.setAttribute("viewBox", `${x0} -34 ${x1 - x0} ${y1 + 34}`);
+    $("ex-pezzo").innerHTML = schedaPezzo(EX.pezzo, TIPO_MISURA[EX.pezzo.tipo]);   // scheda con disegno e quota
+  }
+  $("ex-pezzo").hidden = !EX.pezzo;      // scheda visibile solo con un pezzo
+  // Storico delle ultime risposte
+  const righe = EX.storia.slice(-8).reverse().map((r) =>
+    `<tr><td class="mono">${r.num}</td><td class="mono">1/${r.n} ${r.g === 2 ? "D" : "S"}</td><td>${r.pezzo}</td><td class="mono">${r.giusta}</td><td class="mono">${r.data}</td><td class="${r.ok ? "ok-t" : "err-t"}">${r.ok ? "Corretta" : "Errata"}</td></tr>`).join("");
+  $("ex-hist").innerHTML = EX.storia.length
+    ? `<thead><tr><th>N.</th><th>Nonio</th><th>Pezzo</th><th>Misura</th><th>Risposta</th><th>Esito</th></tr></thead><tbody>${righe}</tbody>`
+    : "";
+}
+
+// Controlla la risposta e mostra la soluzione commentata
+function verifica() {
+  if (EX.risposto) return;               // già verificata
+  const s = spec(EX.n, EX.g);            // nonio
+  const v = leggiNumero($("ex-answer").value);   // risposta dello studente
+  if (isNaN(v)) {                        // risposta non numerica
+    $("ex-feedback").innerHTML = `<div class="feedback info">Scrivi un numero in millimetri, per esempio ${fmt(12 + 3 * s.r, s.n)}.</div>`;
+    return;
+  }
+  const M = EX.N / EX.n;                 // misura esatta
+  const { I, k } = lettura(EX.N, EX.n);  // soluzione scomposta
+  const ok = Math.abs(v - M) < 1e-6;     // corretta se coincide (tolleranza numerica)
+  EX.risposto = true;                    // chiude la domanda
+  EX.tot++;                              // aggiorna il punteggio
+  if (ok) { EX.giuste++; EX.serie++; } else { EX.serie = 0; }
+  EX.storia.push({ num: EX.numero, n: EX.n, g: EX.g, pezzo: EX.pezzo ? EX.pezzo.nome : "—", giusta: fmt(M, EX.n), data: String($("ex-answer").value).trim(), ok });
+
+  // Diagnosi dell'errore: confronta parte intera e parte decimale
+  let diagnosi = "";
+  if (!ok) {
+    const Iv = Math.floor(v + 1e-9);     // mm interi della risposta
+    const resto = (v - Iv) * EX.n;       // parte decimale espressa in passi
+    if (Math.abs(resto - Math.round(resto)) > 1e-6) diagnosi = `La misura deve essere un multiplo della risoluzione (${fmt(s.r, s.n)} mm).`;
+    else if (Iv === I) diagnosi = "Hai letto bene i millimetri interi: ricontrolla quale tratto del nonio coincide.";
+    else if (Math.round(resto) === k) diagnosi = "Il tratto del nonio è giusto, ma i mm interi si leggono sull'asta subito a sinistra dello zero del nonio.";
+    else diagnosi = "Ripeti la procedura: prima i mm interi a sinistra dello zero del nonio, poi il tratto coincidente.";
+  }
+
+  // Soluzione passo per passo
+  const tipoM = EX.pezzo ? { est: "esterna", int: "interna", prof: "di profondità" }[EX.pezzo.tipo] : "";   // tipo di misura
+  const passi = `<ol>
+      ${EX.pezzo ? `<li>${EX.pezzo.nome}: ${EX.pezzo.quota}, misura ${tipoM}.</li>` : ""}
+      <li>Mm interi a sinistra dello zero del nonio: <b>I = ${I} mm</b>.</li>
+      <li>Tratto coincidente del nonio: <b>k = ${k}</b>${k === 0 ? " (coincidono lo zero e l'ultimo tratto)" : ""}.</li>
+      <li>M = I + k · r = ${I} + ${k} · ${fmt(s.r, s.n)} = <b>${fmt(M, s.n)} mm</b>.</li>
+    </ol>`;
+  $("ex-feedback").innerHTML = ok
+    ? `<div class="feedback ok"><strong>Corretto: ${fmt(M, s.n)} mm</strong>${passi}</div>`
+    : `<div class="feedback err"><strong>Non corretto: la misura è ${fmt(M, s.n)} mm</strong><p>${diagnosi}</p>${passi}</div>`;
+  disegnaEsercizio();                    // mostra le evidenziazioni della soluzione
+}
+
+function initEsercizio() {
+  creaSegmenti($("ex-level"), Object.keys(LIVELLI), (l) => LIVELLI[l].nome, (l) => { EX.livello = l; nuovaMisura(); });
+  creaSegmenti($("ex-n"), NONI_N, (n) => `1/${n}`, (n) => { EX.pn = n; nuovaMisura(); });
+  creaSegmenti($("ex-g"), NONI_G, (g) => NOME_G[g], (g) => { EX.pg = g; nuovaMisura(); });
+  $("ex-form").addEventListener("submit", (e) => { e.preventDefault(); verifica(); });   // Invio o pulsante Verifica
+  $("ex-new").addEventListener("click", nuovaMisura);
+  $("ex-pezzi").addEventListener("change", (e) => { EX.pezzi = e.target.checked; nuovaMisura(); });   // attiva/disattiva i pezzi
+  $("ex-hint").addEventListener("click", () => {            // suggerimento: mostra solo lo zero del nonio
+    EX.aiuto = true;
+    $("ex-feedback").innerHTML = `<div class="feedback info">Suggerimento: il tratto blu dell'asta indica i mm interi; ora cerca il tratto del nonio allineato con un tratto dell'asta.</div>`;
+    disegnaEsercizio();
+  });
+  $("ex-zoom").addEventListener("input", (e) => { EX.zoom = +e.target.value; disegnaEsercizio(); });
+  $("ex-pan").addEventListener("input", (e) => { EX.pan = +e.target.value; disegnaEsercizio(); });
+  nuovaMisura();                         // prima domanda
+}
+
+// =====================================================================
+// NAVIGAZIONE TRA LE VISTE (tramite #nome nell'indirizzo)
+// =====================================================================
+const VISTE = ["strumento", "nonio", "simulatore", "esercizio"];
+
+function mostraVista() {
+  const nome = location.hash.slice(1);   // testo dopo il simbolo #
+  const attiva = VISTE.includes(nome) ? nome : "strumento";   // vista predefinita
+  for (const v of VISTE) $("view-" + v).hidden = v !== attiva;   // mostra solo la vista scelta
+  for (const a of document.querySelectorAll(".tabs a")) {
+    if (a.dataset.view === attiva) a.setAttribute("aria-current", "page");   // scheda attiva
+    else a.removeAttribute("aria-current");
+  }
+  if (attiva === "simulatore") disegnaSimulatore();   // la lente va ridisegnata quando diventa visibile
+  if (attiva === "esercizio") disegnaEsercizio();
+}
+
+// =====================================================================
+// TEMA CHIARO / SCURO
+// =====================================================================
+const CHIAVE_TEMA = "tema-laboratorio-metrologia";   // nome con cui il browser ricorda la scelta
+
+// Restituisce il tema mostrato in questo momento: "dark" oppure "light"
+function temaAttuale() {
+  const t = document.documentElement.dataset.theme;      // scelta esplicita (attributo data-theme)
+  if (t === "dark" || t === "light") return t;            // se presente, vale quella
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";   // altrimenti il tema del sistema
+}
+
+// Aggiorna il testo del pulsante: propone sempre il tema opposto
+function aggiornaPulsanteTema() {
+  const scuro = temaAttuale() === "dark";                 // tema attuale
+  $("theme-btn").textContent = scuro ? "☀ Chiaro" : "☾ Scuro";   // testo del pulsante
+  $("theme-btn").setAttribute("aria-pressed", String(scuro));         // stato per l'accessibilità
+}
+
+// Ripristina l'ultima scelta e collega il pulsante
+function initTema() {
+  try {
+    const salvato = localStorage.getItem(CHIAVE_TEMA);    // scelta salvata in precedenza
+    if (salvato === "dark" || salvato === "light") document.documentElement.dataset.theme = salvato;
+  } catch (e) { /* memoria del browser non disponibile: si usa il tema del sistema */ }
+  $("theme-btn").addEventListener("click", () => {
+    const nuovo = temaAttuale() === "dark" ? "light" : "dark";   // inverte il tema
+    document.documentElement.dataset.theme = nuovo;              // le variabili CSS cambiano subito
+    try { localStorage.setItem(CHIAVE_TEMA, nuovo); } catch (e) { /* nessun salvataggio possibile */ }
+    aggiornaPulsanteTema();                                      // aggiorna il testo del pulsante
+  });
+  aggiornaPulsanteTema();                                        // testo iniziale
+}
+
+// =====================================================================
+// SCHEDA DEL PEZZO: disegno tecnico schematico con la quota da misurare
+// (viewBox 140 × 90; la quota richiesta è in arancio con il simbolo "?")
+// =====================================================================
+const MATERIALE = { dado: "zinc", vite: "zinc", rond: "zinc", rondS: "zinc", bocc: "bronze", punta: "hss" };   // materiale di ogni pezzo (gli altri: acciaio)
+
+function iconaPezzo(id, u) {
+  const mat = MATERIALE[id] || "steel";                    // materiale del pezzo
+  const F = `fill="var(--mat-${mat})" stroke="var(--mat-edge)" stroke-width="1.2" stroke-linejoin="round"`;   // pieno con contorno
+  const S = `stroke="var(--mat-edge)" stroke-width="0.8" fill="none"`;          // linee sottili
+  const AX = `stroke="var(--mat-edge)" stroke-width="0.6" stroke-dasharray="8 2 1.5 2" fill="none"`;   // linea d'asse (tratto-punto)
+  const NA = `stroke="var(--mat-edge)" stroke-width="0.7" stroke-dasharray="3 2" fill="none"`;         // linee nascoste (tratteggio)
+  const VUOTO = `fill="var(--panel-2)" stroke="var(--mat-edge)" stroke-width="1.2"`;                    // fori e spazi vuoti
+  const TR = `fill="url(#${u}-hat)"`;                      // tratteggio delle sezioni
+  let h = `<defs>
+    <marker id="${u}-fr" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 Z" fill="var(--cal-mark)"/></marker>
+    <pattern id="${u}-hat" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M 0 0 V 4" stroke="var(--mat-edge)" stroke-width="0.7"/></pattern>
+  </defs>`;
+  // Quota orizzontale da x1 a x2 alla quota y; ya, yb = inizio delle linee di richiamo (null = senza richiami)
+  const qH = (x1, x2, y, ya, yb) =>
+    (ya !== null ? `<path d="M ${x1} ${ya} V ${y + 3} M ${x2} ${yb} V ${y + 3}" stroke="var(--cal-mark)" stroke-width="0.7"/>` : "") +
+    `<path d="M ${x1} ${y} H ${x2}" stroke="var(--cal-mark)" stroke-width="1.2" marker-start="url(#${u}-fr)" marker-end="url(#${u}-fr)"/>` +
+    `<text x="${(x1 + x2) / 2}" y="${y - 2.5}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--cal-mark)">?</text>`;
+  // Quota verticale da y1 a y2 all'ascissa x; xa = inizio delle linee di richiamo (null = senza richiami)
+  const qV = (y1, y2, x, xa) =>
+    (xa !== null ? `<path d="M ${xa} ${y1} H ${x + 3} M ${xa} ${y2} H ${x + 3}" stroke="var(--cal-mark)" stroke-width="0.7"/>` : "") +
+    `<path d="M ${x} ${y1} V ${y2}" stroke="var(--cal-mark)" stroke-width="1.2" marker-start="url(#${u}-fr)" marker-end="url(#${u}-fr)"/>` +
+    `<text x="${x + 4}" y="${(y1 + y2) / 2 + 3.5}" font-size="10" font-weight="600" fill="var(--cal-mark)">?</text>`;
+  // Vertici di un esagono con due facce verticali (centro cx, cy; raggio ai vertici r)
+  const esagono = (cx, cy, r) => [90, 150, 210, 270, 330, 30].map((a) =>
+    `${(cx + r * Math.cos(a * Math.PI / 180)).toFixed(2)},${(cy - r * Math.sin(a * Math.PI / 180)).toFixed(2)}`).join(" ");
+  // Cuscinetto visto di fronte: anello esterno, sfere, anello interno, foro
+  const cuscinetto = (cx, cy) => {
+    let c = `<circle cx="${cx}" cy="${cy}" r="30" ${F}/><circle cx="${cx}" cy="${cy}" r="24" ${VUOTO}/>`;   // anello esterno
+    for (let k = 0; k < 9; k++) {                          // 9 sfere sulla circonferenza primitiva
+      const a = k * 40 * Math.PI / 180;
+      c += `<circle cx="${(cx + 19.5 * Math.cos(a)).toFixed(2)}" cy="${(cy + 19.5 * Math.sin(a)).toFixed(2)}" r="4.2" ${F}/>`;
+    }
+    return c + `<circle cx="${cx}" cy="${cy}" r="15" ${F}/><circle cx="${cx}" cy="${cy}" r="10" ${VUOTO}/>`;   // anello interno e foro
+  };
+  // Alberino a tre gradini visto di lato
+  const alberino = () => `<rect x="12" y="31" width="24" height="18" ${F}/><rect x="36" y="25" width="52" height="30" ${F}/><rect x="88" y="29" width="40" height="22" ${F}/>` +
+    `<path d="M 6 40 H 134" ${AX}/>`;
+
+  switch (id) {
+    case "dado":                                           // dado: vista frontale, quota tra le facce
+      h += `<polygon points="${esagono(70, 38, 26.6)}" ${F}/><circle cx="70" cy="38" r="23" ${S}/>`;
+      h += `<circle cx="70" cy="38" r="11" ${VUOTO}/><path d="M 84 38 A 14 14 0 1 1 70 24" ${S}/>`;   // foro e filetto (3/4 di cerchio)
+      h += qH(47, 93, 82, 51.3, 51.3);
+      break;
+    case "perno":                                          // perno: vista laterale, quota sul diametro
+      h += `<path d="M 60 6 H 80 L 82 8 V 68 L 80 70 H 60 L 58 68 V 8 Z" ${F}/><path d="M 58 8 H 82 M 58 68 H 82" ${S}/><path d="M 70 2 V 74" ${AX}/>`;
+      h += qH(58, 82, 83, 70, 70);
+      break;
+    case "cuscD":                                          // cuscinetto: diametro esterno
+      h += cuscinetto(70, 37) + qH(40, 100, 82, 37, 37);
+      break;
+    case "cuscd":                                          // cuscinetto: diametro del foro
+      h += cuscinetto(70, 37) + qH(60, 80, 37, null, null);
+      break;
+    case "albD":                                           // alberino: diametro del gradino maggiore
+      h += alberino() + qV(25, 55, 62, null);
+      break;
+    case "albL":                                           // alberino: lunghezza totale
+      h += alberino() + qH(12, 128, 74, 49, 51);
+      break;
+    case "vite":                                           // vite: diametro del gambo
+      h += `<rect x="12" y="20" width="18" height="40" rx="1.5" ${F}/><path d="M 12 30 H 30 M 12 50 H 30" ${S}/>`;   // testa esagonale vista di lato
+      h += `<path d="M 30 31 H 120 L 122 33 V 47 L 120 49 H 30 Z" ${F}/>`;                                            // gambo
+      for (let x = 66; x <= 116; x += 5) h += `<path d="M ${x} 31 L ${x + 2.5} 49" ${S}/>`;                         // filetto
+      h += `<path d="M 66 33.5 H 121 M 66 46.5 H 121" stroke="var(--mat-edge)" stroke-width="0.5" fill="none"/>`;     // fondo del filetto
+      h += qV(31, 49, 128, 122);
+      break;
+    case "rond":                                           // rondella: diametro esterno
+      h += `<circle cx="70" cy="37" r="30" ${F}/><circle cx="70" cy="37" r="13" ${VUOTO}/>` + qH(40, 100, 82, 37, 37);
+      break;
+    case "rondS":                                          // rondella: spessore (vista laterale)
+      h += `<rect x="64" y="8" width="12" height="60" ${F}/><path d="M 64 25 H 76 M 64 51 H 76" ${NA}/><path d="M 58 38 H 82" ${AX}/>`;
+      h += qH(64, 76, 80, 68, 68);
+      break;
+    case "bocc":                                           // boccola: sezione, diametro interno
+      h += `<rect x="34" y="10" width="18" height="60" ${F}/><rect x="34" y="10" width="18" height="60" ${TR}/>`;
+      h += `<rect x="88" y="10" width="18" height="60" ${F}/><rect x="88" y="10" width="18" height="60" ${TR}/>`;
+      h += `<path d="M 52 10 H 88 M 52 70 H 88" ${S}/><path d="M 70 4 V 76" ${AX}/>` + qH(52, 88, 40, null, null);
+      break;
+    case "blocco": {                                       // blocchetto: sezione con foro cieco, profondità
+      const d = "M 20 14 H 58 V 52 H 82 V 14 H 124 V 72 H 20 Z";   // contorno con il foro aperto in alto
+      h += `<path d="${d}" ${F}/><path d="${d}" ${TR}/><path d="M 70 8 V 58" ${AX}/>` + qV(14, 52, 100, 82);
+      break;
+    }
+    case "sfera":                                          // sfera: diametro
+      h += `<circle cx="70" cy="37" r="28" ${F}/><ellipse cx="60" cy="27" rx="8" ry="5" fill="#ffffff" opacity=".45"/>` + qH(42, 98, 80, 37, 37);
+      break;
+    case "punta":                                          // punta elicoidale: diametro
+      h += `<rect x="10" y="31" width="46" height="18" ${F}/><path d="M 56 31 H 112 L 126 40 L 112 49 H 56 Z" ${F}/>`;   // codolo, corpo e cuspide
+      for (let x = 58; x < 108; x += 12) h += `<path d="M ${x} 31 Q ${x + 7} 40 ${x + 12} 49" ${S}/>`;                  // eliche
+      h += qV(31, 49, 84, null);
+      break;
+    case "lam":                                            // lamiera: spessore
+      h += `<rect x="64" y="8" width="12" height="60" ${F}/><rect x="64" y="8" width="12" height="60" ${TR}/>` + qH(64, 76, 80, 68, 68);
+      break;
+    case "cuscB":                                          // cuscinetto: larghezza (vista laterale)
+      h += `<rect x="52" y="6" width="36" height="66" rx="2" ${F}/><path d="M 52 15 H 88 M 52 63 H 88" ${S}/><path d="M 52 25 H 88 M 52 53 H 88" ${NA}/><path d="M 46 39 H 94" ${AX}/>`;
+      h += qH(52, 88, 83, 72, 72);
+      break;
+  }
+  return h;
+}
+
+// Codice HTML della scheda del pezzo
+function schedaPezzo(p, tipoMisura) {
+  return `<svg viewBox="0 0 140 90" role="img" aria-label="${p.nome}">${iconaPezzo(p.id, "ic")}</svg>` +
+    `<div class="pezzo-txt"><span class="label">Pezzo da misurare</span><b>${p.nome}</b>` +
+    `<span>Quota da rilevare: <b>${p.quota}</b></span>` +
+    (tipoMisura ? `<span>Misura ${tipoMisura}</span>` : "") +
+    `<span class="nota">Disegno schematico, non in scala. La quota in arancio è quella da leggere sullo strumento.</span></div>`;
+}
+
+// =====================================================================
+// PEZZI MECCANICI PER L'ESERCITAZIONE CON IL CALIBRO
+// tipo: "est" = misura esterna (becchi grandi), "int" = misura interna (becchi a coltello),
+//       "prof" = misura di profondità (asta di profondità)
+// min, max: intervallo realistico della quota [mm]
+// =====================================================================
+const PEZZI_CAL = [
+  { id: "dado", nome: "Dado esagonale", quota: "apertura chiave (distanza tra due facce opposte)", tipo: "est", min: 7, max: 46 },
+  { id: "perno", nome: "Perno cilindrico", quota: "diametro", tipo: "est", min: 4, max: 40 },
+  { id: "cuscD", nome: "Cuscinetto radiale a sfere", quota: "diametro esterno D", tipo: "est", min: 19, max: 90 },
+  { id: "cuscd", nome: "Cuscinetto radiale a sfere", quota: "diametro interno d (foro)", tipo: "int", min: 8, max: 45 },
+  { id: "albD", nome: "Alberino a gradini", quota: "diametro del gradino maggiore", tipo: "est", min: 8, max: 40 },
+  { id: "albL", nome: "Alberino a gradini", quota: "lunghezza totale", tipo: "est", min: 40, max: 145 },
+  { id: "vite", nome: "Vite a testa esagonale", quota: "diametro esterno del gambo filettato", tipo: "est", min: 4.8, max: 24 },
+  { id: "rond", nome: "Rondella piana", quota: "diametro esterno", tipo: "est", min: 9, max: 60 },
+  { id: "bocc", nome: "Boccola in bronzo", quota: "diametro interno (foro)", tipo: "int", min: 6, max: 60 },
+  { id: "blocco", nome: "Blocchetto con foro cieco", quota: "profondità del foro", tipo: "prof", min: 5, max: 80 },
+];
+const TIPO_MISURA = {                    // descrizione del tipo di misura
+  est: "esterna: il pezzo va serrato tra i becchi grandi.",
+  int: "interna: i becchi a coltello si aprono dentro il foro.",
+  prof: "di profondità: la testa dell'asta appoggia sul pezzo e l'asta di profondità scende nel foro.",
+};
+
+// Disegna il pezzo sul calibro (vista laterale). M = quota [mm], BE = estremità dell'asta.
+// Restituisce il codice SVG e i limiti del disegno per allargare l'inquadratura.
+function pezzoSuCalibro(p, M, BE) {
+  const mat = MATERIALE[p.id] || "steel";                          // materiale del pezzo
+  const f = `fill="var(--mat-${mat})" stroke="var(--mat-edge)" stroke-width="1" vector-effect="non-scaling-stroke"`;   // pieno con contorno
+  const sl = `stroke="var(--mat-edge)" stroke-width="0.2" fill="none"`;                       // linee sottili
+  const cl = `stroke="var(--mat-edge)" stroke-width="0.16" stroke-dasharray="3 1 0.6 1" fill="none"`;   // linea d'asse
+  const hat = `fill="url(#pzc-hat)"`;                                                       // tratteggio di sezione
+  let s = `<defs><pattern id="pzc-hat" width="1.4" height="1.4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M 0 0 V 1.4" stroke="var(--mat-edge)" stroke-width="0.2"/></pattern></defs>`;
+  let xmin = 0, xmax = M, ymin = -34, ymax = 56;                     // limiti predefiniti
+  switch (p.id) {
+    case "dado": {                                                 // dado visto di lato, facce a contatto con i becchi
+      const t = limita(0.8 * M, 6, 28), y0 = 24, c = Math.min(1.2, M * 0.08);   // spessore, quota iniziale, smusso
+      s += `<path d="M ${c} ${y0} H ${M - c} L ${M} ${y0 + c} V ${y0 + t - c} L ${M - c} ${y0 + t} H ${c} L 0 ${y0 + t - c} V ${y0 + c} Z" ${f}/>`;
+      s += `<path d="M ${M / 2} ${y0} V ${y0 + t}" ${sl}/>`;                       // spigolo tra due facce
+      s += `<path d="M 0 ${y0 + c} Q ${M / 4} ${y0 + 2.5 * c} ${M / 2} ${y0 + c} Q ${3 * M / 4} ${y0 + 2.5 * c} ${M} ${y0 + c}" ${sl}/>`;   // smusso superiore
+      s += `<path d="M 0 ${y0 + t - c} Q ${M / 4} ${y0 + t - 2.5 * c} ${M / 2} ${y0 + t - c} Q ${3 * M / 4} ${y0 + t - 2.5 * c} ${M} ${y0 + t - c}" ${sl}/>`;   // smusso inferiore
+      break;
+    }
+    case "perno": {                                                // perno con asse verticale
+      const c = Math.min(1, M * 0.1);                              // smusso
+      s += `<path d="M ${c} 24 H ${M - c} L ${M} ${24 + c} V ${54 - c} L ${M - c} 54 H ${c} L 0 ${54 - c} V ${24 + c} Z" ${f}/>`;
+      s += `<path d="M 0 ${24 + c} H ${M} M 0 ${54 - c} H ${M}" ${sl}/><path d="M ${M / 2} 22 V 56" ${cl}/>`;
+      break;
+    }
+    case "cuscD": {                                                // cuscinetto con asse verticale: larghezza B in altezza
+      const B = limita(0.3 * M, 6, 24), y0 = 39 - B / 2;           // larghezza e posizione
+      s += `<rect x="0" y="${y0}" width="${M}" height="${B}" rx="${Math.min(1, B * 0.1)}" ${f}/>`;
+      s += `<path d="M 0 ${y0 + 0.8} H ${M} M 0 ${y0 + B - 0.8} H ${M}" ${sl}/><path d="M ${M / 2} ${y0 - 2} V ${y0 + B + 2}" ${cl}/>`;
+      break;
+    }
+    case "albD": {                                                 // alberino verticale: gradino maggiore tra i becchi
+      s += `<rect x="${0.14 * M}" y="24" width="${0.72 * M}" height="8" ${f}/><rect x="${0.14 * M}" y="46" width="${0.72 * M}" height="10" ${f}/>`;   // gradini minori
+      s += `<rect x="0" y="32" width="${M}" height="14" ${f}/><path d="M ${M / 2} 22 V 58" ${cl}/>`;   // gradino misurato
+      ymax = 58;
+      break;
+    }
+    case "albL": {                                                 // alberino orizzontale: lunghezza tra i becchi
+      s += `<rect x="0" y="33" width="${0.22 * M}" height="10" ${f}/><rect x="${0.22 * M}" y="30" width="${0.48 * M}" height="16" ${f}/><rect x="${0.7 * M}" y="32" width="${0.3 * M}" height="12" ${f}/>`;
+      s += `<path d="M -2 38 H ${M + 2}" ${cl}/>`;
+      break;
+    }
+    case "vite": {                                                 // vite con testa in basso, oltre le punte dei becchi
+      const pp = limita(M * 0.15, 0.7, 3);                         // passo del filetto disegnato
+      s += `<rect x="0" y="24" width="${M}" height="40" ${f}/>`;    // gambo
+      let fil = "";
+      for (let y = 26; y < 62; y += pp) fil += `M 0 ${y} L ${M} ${y + pp / 2} `;   // linee del filetto
+      s += `<path d="${fil}" ${sl}/>`;
+      const hh = 0.65 * M;                                         // altezza della testa
+      s += `<rect x="${-0.3 * M}" y="64" width="${1.6 * M}" height="${hh}" rx="0.6" ${f}/><path d="M ${0.1 * M} 64 V ${64 + hh} M ${0.9 * M} 64 V ${64 + hh}" ${sl}/>`;   // testa esagonale
+      xmin = -0.3 * M; xmax = 1.3 * M; ymax = 64 + hh;
+      break;
+    }
+    case "rond": {                                                 // rondella vista di taglio
+      const t = limita(0.08 * M, 1.2, 5);                          // spessore
+      s += `<rect x="0" y="36" width="${M}" height="${t}" ${f}/>`;
+      s += `<path d="M ${0.27 * M} 36 V ${36 + t} M ${0.73 * M} 36 V ${36 + t}" stroke="var(--mat-edge)" stroke-width="0.16" stroke-dasharray="0.8 0.5" fill="none"/>`;   // foro (linee nascoste)
+      break;
+    }
+    case "bocc": case "cuscd": {                                   // foro: pareti sezionate attorno ai becchi a coltello
+      const w = limita(0.25 * M, 3, 12);                           // spessore della parete o dell'anello interno
+      s += `<rect x="${-w}" y="-27" width="${w}" height="10" ${f}/><rect x="${-w}" y="-27" width="${w}" height="10" ${hat}/>`;
+      s += `<rect x="${M}" y="-27" width="${w}" height="10" ${f}/><rect x="${M}" y="-27" width="${w}" height="10" ${hat}/>`;
+      xmin = -w; xmax = M + w;
+      if (p.id === "cuscd") {                                      // cuscinetto: sfere e anello esterno
+        const r = 0.45 * w;                                        // raggio delle sfere
+        s += `<circle cx="${-w - r - 0.3}" cy="-22" r="${r}" ${f}/><circle cx="${M + w + r + 0.3}" cy="-22" r="${r}" ${f}/>`;
+        const xo = w + 2 * r + 0.6;                                // inizio dell'anello esterno
+        s += `<rect x="${-xo - w}" y="-27" width="${w}" height="10" ${f}/><rect x="${-xo - w}" y="-27" width="${w}" height="10" ${hat}/>`;
+        s += `<rect x="${M + xo}" y="-27" width="${w}" height="10" ${f}/><rect x="${M + xo}" y="-27" width="${w}" height="10" ${hat}/>`;
+        xmin = -xo - w; xmax = M + xo + w;
+      }
+      s += `<path d="M ${M / 2} -30 V -14" ${cl}/>`;                  // asse del foro
+      break;
+    }
+    case "blocco": {                                               // blocchetto a destra dell'asta, foro cieco profondo M
+      const x2 = BE + M + 12;                                      // fine del blocchetto
+      const d = `M ${BE} -6 H ${x2} V 24 H ${BE} Z M ${BE} 5.2 H ${BE + M} V 10.8 H ${BE} Z`;   // contorno con il foro
+      s += `<path d="${d}" fill-rule="evenodd" ${f}/><path d="${d}" fill-rule="evenodd" ${hat}/>`;
+      xmin = BE; xmax = x2;
+      break;
+    }
+  }
+  return { svg: s, xmin, xmax, ymin, ymax };
+}
+
+// ---------- AVVIO DEL PROGRAMMA ----------
+initTema();                              // pulsante Chiaro/Scuro
+initStrumento();                         // disegno descrittivo
+initNonio();                             // figure del nonio
+initSimulatore();                        // comandi del simulatore
+initEsercizio();                         // prima domanda dell'esercitazione
+window.addEventListener("hashchange", mostraVista);   // cambio di scheda
+window.addEventListener("resize", () => {             // ridimensionamento della finestra: ricalcola le lenti
+  if (location.hash === "#simulatore") disegnaSimulatore();
+  if (location.hash === "#esercizio") disegnaEsercizio();
+});
+mostraVista();                           // mostra la vista iniziale
+</script>

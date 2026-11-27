@@ -1,0 +1,1214 @@
+<title>Laboratorio Comparatore</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!-- Font da Google Fonts: Barlow Condensed (titoli), IBM Plex Sans (testo), IBM Plex Mono (numeri e misure) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* =====================================================================
+   FOGLIO DI STILE (stessa impostazione dei simulatori di calibro e micrometro)
+   Layout: testata con righello, schede, contenuto max 1180 px;
+   simulatore a due colonne (comandi | disegni), una sola su schermi stretti.
+   ===================================================================== */
+
+/* --- Variabili colore e carattere (tema chiaro) --- */
+:root {
+  --bg: #f1f3f6;            /* sfondo pagina */
+  --panel: #ffffff;         /* sfondo pannelli */
+  --panel-2: #e8ecf1;       /* sfondo secondario */
+  --line: #d2d8e0;          /* bordi sottili */
+  --fg: #17202b;            /* testo principale */
+  --muted: #566273;         /* testo secondario */
+  --accent: #2448b5;        /* colore guida */
+  --accent-fg: #ffffff;     /* testo sul colore guida */
+  --ok: #1d7a47;            /* risposta corretta */
+  --ok-soft: #e0f1e7;
+  --err: #b42318;           /* risposta errata */
+  --err-soft: #fbe6e3;
+  /* Colori dello strumento (uguali nei due temi, come l'oggetto reale) */
+  --steel-hi: #f8fafc;      /* acciaio: riflesso */
+  --steel-mid: #d3d9e0;     /* acciaio: tono medio */
+  --steel-lo: #97a2af;      /* acciaio: ombra */
+  --steel-edge: #5c6875;    /* contorni */
+  --frame-hi: #7b8ea3;      /* arco verniciato: luce */
+  --frame-lo: #3d4b5b;      /* arco verniciato: ombra */
+  --plaque: #20272f;        /* piastra isolante */
+  --plaque-fg: #dfe5ec;     /* scritte sulla piastra */
+  --carbide: #6e7680;       /* riporti in metallo duro sulle facce di misura */
+  --engrave: #121820;       /* incisioni */
+  --cal-zero: #1f45c4;      /* evidenziazione lettura sulla bussola */
+  --cal-mark: #d27a00;      /* evidenziazione tamburo / nonio */
+  --cal-mark-soft: rgba(242, 153, 0, .28);
+  --lens-bg: #dfe4ea;       /* sfondo dei riquadri di dettaglio */
+  /* Caratteri */
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, ui-monospace, monospace;
+  --radius: 6px;
+}
+/* --- Tema scuro automatico --- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1318; --panel: #161d25; --panel-2: #1e2731; --line: #2c3743;
+    --fg: #e5eaf0; --muted: #9ba8b6; --accent: #8aa5ff; --accent-fg: #0e1318;
+    --ok: #52c58a; --ok-soft: #13301f; --err: #ff8073; --err-soft: #3a1714;
+    --steel-hi: #e6ebf0; --steel-mid: #bfc8d2; --steel-lo: #87929f; --steel-edge: #46505c;
+    --lens-bg: #1b232c;
+    color-scheme: dark;
+  }
+}
+/* --- Tema scuro scelto esplicitamente --- */
+:root[data-theme="dark"] {
+  --bg: #0e1318; --panel: #161d25; --panel-2: #1e2731; --line: #2c3743;
+  --fg: #e5eaf0; --muted: #9ba8b6; --accent: #8aa5ff; --accent-fg: #0e1318;
+  --ok: #52c58a; --ok-soft: #13301f; --err: #ff8073; --err-soft: #3a1714;
+  --steel-hi: #e6ebf0; --steel-mid: #bfc8d2; --steel-lo: #87929f; --steel-edge: #46505c;
+  --lens-bg: #1b232c;
+  color-scheme: dark;
+}
+
+/* --- Impostazioni generali --- */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; line-height: 1.1; text-wrap: balance; margin: 0; }
+h2 { font-size: 1.9rem; letter-spacing: .01em; }
+h3 { font-size: 1.3rem; letter-spacing: .02em; }
+p { margin: 0; max-width: 68ch; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- Testata --- */
+.top { background: var(--panel); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1180px; margin: 0 auto; padding-block: 14px 0; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: end; gap: 10px 16px; }
+.brand { display: flex; flex-direction: column; gap: 2px; padding-bottom: 12px; }
+.brand h1 { font-size: 1.9rem; text-transform: uppercase; letter-spacing: .04em; }
+.brand small { font-family: var(--f-mono); font-size: .74rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+/* Righello: tratti ogni 0,5 mm (3 px) sotto e ogni 1 mm sopra, come la bussola del micrometro */
+.ruler { height: 12px; background:
+  repeating-linear-gradient(90deg, var(--fg) 0 1px, transparent 1px 30px) bottom left / 100% 12px no-repeat,
+  repeating-linear-gradient(90deg, var(--muted) 0 1px, transparent 1px 6px) bottom left / 100% 6px no-repeat,
+  repeating-linear-gradient(90deg, transparent 0 3px, var(--muted) 3px 4px, transparent 4px 6px) bottom left / 100% 3px no-repeat;
+  opacity: .55; }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-left: auto; }
+.tabs a { font-family: var(--f-display); font-size: 1.12rem; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; text-decoration: none; color: var(--muted); padding: 8px 10px 10px; border-radius: var(--radius) var(--radius) 0 0; border: 1px solid transparent; border-bottom: none; }
+.tabs a:hover { color: var(--fg); background: var(--panel-2); }
+.tabs a[aria-current="page"] { color: var(--accent); background: var(--bg); border-color: var(--line); margin-bottom: -1px; }
+
+/* --- Contenuto --- */
+main { max-width: 1180px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.view { display: flex; flex-direction: column; gap: 26px; }
+.intro { display: flex; flex-direction: column; gap: 10px; }
+.eyebrow { font-family: var(--f-mono); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.lead { font-size: 1.05rem; color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.panel-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* --- Disegni --- */
+.figure { width: 100%; overflow-x: auto; }
+svg.mic { display: block; width: 100%; height: auto; }
+svg text { font-family: var(--f-mono); }
+.lens-box { position: relative; height: clamp(220px, 30vw, 340px); background: var(--lens-bg); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.lens-box svg { width: 100%; height: 100%; display: block; }
+.lens-tag { position: absolute; left: 10px; top: 8px; font-family: var(--f-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--panel); padding: 2px 8px; border-radius: 3px; border: 1px solid var(--line); }
+.duo { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.drag-x { cursor: ew-resize; touch-action: pan-y; }
+.drag-y { cursor: ns-resize; touch-action: pan-x; }
+
+/* --- Richiami numerati --- */
+.co circle { fill: var(--accent); }
+.co text { fill: var(--accent-fg); font-family: var(--f-display) !important; font-weight: 700; }
+.co line { stroke: var(--accent); stroke-width: .35; }
+.co.on circle { fill: var(--cal-mark); }
+.co.on line { stroke: var(--cal-mark); stroke-width: .6; }
+.parts { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 0; }
+.parts li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.parts li.on { border-color: var(--cal-mark); }
+.num { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; }
+.parts b { display: block; font-weight: 600; }
+.parts span { color: var(--muted); font-size: .92rem; }
+
+/* --- Contenuti testuali --- */
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.spec { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0; }
+.spec dt { font-family: var(--f-mono); font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding-top: 2px; }
+.spec dd { margin: 0; }
+.checklist { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.formulas { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.formula { background: var(--panel-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.formula code { font-family: var(--f-mono); font-size: 1.1rem; font-weight: 500; }
+.formula span { font-size: .88rem; color: var(--muted); }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+td.mono { font-family: var(--f-mono); }
+.steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; counter-increment: s; }
+.steps li::before { content: counter(s); width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); display: grid; place-items: center; font-family: var(--f-display); font-weight: 700; }
+
+/* --- Comandi --- */
+.sim { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 18px; align-items: start; }
+.controls { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.label { font-family: var(--f-mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.seg button { flex: 1; border: none; background: var(--panel); padding: 8px 6px; cursor: pointer; font-family: var(--f-mono); font-size: .88rem; border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: none; }
+.seg button:hover { background: var(--panel-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.seg button:disabled { opacity: .45; cursor: not-allowed; }
+.seg.grid { display: grid; grid-template-columns: 1fr 1fr; }
+.seg.grid button:nth-child(2n) { border-right: none; }
+.seg.grid button:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 8px 12px; cursor: pointer; font-weight: 500; }
+.btn:hover { background: var(--panel-2); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-row .btn { flex: 1; font-family: var(--f-mono); font-size: .86rem; padding: 8px 4px; }
+.num-in input { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg); font-family: var(--f-mono); font-size: 1.05rem; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.readout { background: var(--panel-2); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.readout .big { font-family: var(--f-mono); font-size: 2.2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.readout .big small { font-size: 1rem; color: var(--muted); font-weight: 400; }
+.readout .why { font-size: .9rem; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font-family: var(--f-mono); font-size: .78rem; padding: 3px 8px; border-radius: 3px; background: var(--panel-2); white-space: nowrap; }
+.chip b { color: var(--muted); font-weight: 400; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .85rem; color: var(--muted); }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* --- Esercitazione --- */
+.score { display: flex; flex-wrap: wrap; gap: 10px; }
+.score div { background: var(--panel-2); border-radius: var(--radius); padding: 8px 12px; min-width: 110px; }
+.score b { display: block; font-family: var(--f-mono); font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.score span { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-family: var(--f-mono); }
+.feedback { border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); }
+.feedback.ok { background: var(--ok-soft); border-color: var(--ok); }
+.feedback.err { background: var(--err-soft); border-color: var(--err); }
+.feedback.info { background: var(--panel-2); }
+.feedback strong { font-family: var(--f-display); font-size: 1.3rem; letter-spacing: .02em; }
+.feedback.ok strong { color: var(--ok); }
+.feedback.err strong { color: var(--err); }
+.feedback ol { margin: 0; padding-left: 20px; }
+.ok-t { color: var(--ok); font-weight: 600; }
+.err-t { color: var(--err); font-weight: 600; }
+
+@media (max-width: 860px) {
+  .sim { grid-template-columns: 1fr; }
+  .tabs { margin-left: 0; }
+  .tabs a { font-size: 1rem; padding: 7px 10px 9px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .feedback { animation: fade .25s ease-out; }
+  @keyframes fade { from { transform: translateY(4px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+:fullscreen { background: var(--bg); padding: 20px; overflow: auto; }
+
+/* --- Pulsante del tema e scheda del pezzo da misurare --- */
+:root {
+  --mat-steel: #8fa1b5;     /* acciaio */
+  --mat-zinc: #d9c77e;      /* acciaio zincato giallo (viteria) */
+  --mat-bronze: #c6904f;    /* bronzo */
+  --mat-hss: #5d6773;       /* acciaio rapido (utensili) */
+  --mat-edge: #2f3842;      /* contorni dei pezzi */
+}
+.theme-btn { align-self: center; border: 1px solid var(--line); background: var(--panel-2); border-radius: 999px; padding: 6px 14px; cursor: pointer; font-family: var(--f-mono); font-size: .8rem; margin-bottom: 8px; white-space: nowrap; }
+.theme-btn:hover { border-color: var(--accent); }
+.pezzo { display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 14px; align-items: center; background: var(--panel-2); border-radius: var(--radius); padding: 12px; }
+.pezzo svg { width: 100%; height: auto; display: block; }
+.pezzo-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pezzo-txt > b { font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; letter-spacing: .02em; }
+.pezzo-txt .nota { font-size: .8rem; color: var(--muted); }
+@media (max-width: 480px) { .pezzo { grid-template-columns: 1fr; } }
+
+/* --- Colori del comparatore (uguali nei due temi, come l'oggetto reale) --- */
+:root {
+  --face: #fbfcfd;          /* quadrante */
+  --needle: #1b2027;        /* lancetta */
+  --dial-red: #c0281b;      /* numeri rossi (valori negativi) */
+  --muted-ink: #5b6672;     /* scritte secondarie sul quadrante */
+  --tol: #1f9d55;           /* indici e zona di tolleranza */
+  --granite: #3a3f46;       /* piano di riscontro in granito */
+  --body-dark: #2a313a;     /* corpo del comparatore digitale */
+  --lcd-bg: #c4d1b8;        /* fondo del display LCD */
+  --lcd-fg: #172012;        /* cifre del display */
+}
+.cmp-box { height: clamp(420px, 62vh, 720px); background: var(--lens-bg); border-radius: var(--radius); border: 1px solid var(--line); overflow: hidden; }
+.cmp-box svg { width: 100%; height: 100%; display: block; }
+
+/* --- Logo del docente nella testata (su riquadro bianco: resta leggibile anche nel tema scuro) --- */
+.logo { height: 64px; width: auto; background: #ffffff; border-radius: 8px; padding: 3px; border: 1px solid var(--line); align-self: center; }
+.top-in { align-items: center; padding-block: 12px 0; }
+.brand { padding-bottom: 0; }
+.theme-btn { order: 2; margin-left: auto; margin-bottom: 0; }   /* pulsante del tema in alto a destra */
+.tabs { order: 3; flex-basis: 100%; margin-left: 0; }            /* schede su una riga propria, sotto il titolo */
+@media (max-width: 480px) { .logo { height: 48px; } }
+</style>
+
+<!-- =====================================================================
+     STRUTTURA DELLA PAGINA
+     ===================================================================== -->
+<header class="top">
+  <div class="top-in">
+    <img class="logo" src="data:image/webp;base64,UklGRhQkAABXRUJQVlA4IAgkAACwcgCdASrUALQAPj0ci0OiIaEUS44UIAPEsSI7kJ67n+S7jLm/tPNA5P7Pfe/kf2jdGPWXlhczfMl8w/9d6kf0d7Av6n/rj1r/Mb/Of8L/x/7B+//zNf9L/b+zb/ReoL/PP8Z1mvoAftL6aP/d/yPwl/1T/af9//Ufv/9CH84/tX/j9gD1yvMA9Wfqh/hPRR36/dv6/+yvoT4lfHXsd/d/ap/nPGN0B/s/Qr+OfX37h/d/23/vX7tfJH9m/o37Zfkz7Y/GT+a/LT4Avx7+Sf3r+qfsx/f/2+90vak7H/nP9N+UnwC+xP03/P/3f/Ff6j/D+k7/B+hH2B/z/5jfQB/Pv6V/lvzK/xn//+wf+l4NH4j/f+wD/Ov7P/xf8X+Vv0w/yH/R/yH+l/av2s/nf96/5f+J/yn/u/zH2Efyz+n/6r+6/5v/v/5X////D7rfX9+2H/t91H9if/ggLEtqLRon6wRoDYwMXgTE/b1yf/B773y6HmGzt/MrWaIZZYcOw1Av7WGo5+cx11uFWVQF6qE2Xh+t0ba3fGZVR8f0QV/wD//5N52ThlgAIbPwMiYKTUCvyT6AZpmki3wQ01juseqeP/McdJp93PI+PQMy+PC56vbSktF3i+l5imDGmBA5AxVBFeA2ZreIMt6fktuZ8cqVqtPPIFEj1Qtsi13wcm5/ysrP13OpBPmb5lWQqdUSOXebhswxtMPBVpp3/dUg7wwubabzaIjJVW7UBInahaxF6KkZuy9gquc8W7/19+dN31SUwdFrI6aeszVkzR291L1WYf6OmaG5fzrs0uHgm2wg7jCfXbZ526xMvmUcu9Aq+McUIQCc0u4f910tki0jsGhHkDRQvCNtfyq/JxNehGmR/xR/KNX18lda5u9iWjYefjiIlasd4Y++sTozLL8xUEYyMIs4EmD4GIq6+1aBo8EXL93IYJ8RLoPcYtGWsVhjiLEVuAa979416pz5GJDqEZ3fkfheOLmEtmi6FJhJrad1szEAOQbLfpnuj14qpI65avjycuMnrzoayEYl2A17uM/041qWeEN1IgANeXU3ko4G/NNUsTBmGZnw2Wr8nSqdpFGFiSHcXnTBliHFpVJ+ZgVXRv2lKBm4hLObmoXQ0Gt6j/YRcifVAi9O1WXdonxouV07eHR/CzYrg3pXwYuCW2pI9amgWzCHM3jOTy94t170/ilKI06M45aTT08NCK8ukIH6V9JXI8XyfyhLMAV4AAD+/oGb3+cvJGtkRUjKCQcq7s5QSrA2t9yIZZnrxRBOe1ssAMkzh/39L4EmAJgEqEPfhbS2UcXNZui4w/1YFgy272q77XpWfYbaAzbVZxcQpMR9TYkeTv+n/2vrgPSKdyVcYreCXzIMf7kY1ReeZS+XlGAkcRQp2iPu+++lY/lgeH2HwLnDiFDRtRn4T5j3qVXaf/6X9PXRL6fPvbAYnG/KH9AU0jSHgQKQoCh/n/wxOhARKcqW4bFZJSvXrg4PtBFb4UP0x3zwNwCayi1vdfD3+badSIr+T7qU/MqmacWAaSV8BbwSf2v8rKro+H/7Ui3iOPZqYlVaDatkkvDFzHBbW0lTyy65Xgrf3H9ib0IbLYmMHqpzeP97kHqm0RIf2adMGPa1NI2YPwG3k5v4L4bxu9c6IJI5GakYfjYSPl/02BxRflhHsgoSIbilXPHlk0iYzzLgd5CTXirU0U9eW64pF1zMojfWbAmVe1FedBt6O739kEUzk2zSsWpr9F1zXhpbvzLxYHvtqrex6c+S0fX/Sc75tDgkUtqDYhLP9eaZC+xmHLrqbkOhmEPmmywj9HR1T5fx6rfEO2lD7KIPJ8MC26beoUAulVF0HGBaSvMCVl4UnT23Q2GOFo+s45pyegSrkIdcywGHXpe2AXrsJaO3qrR9aumV83hjVaF9XVtsRxKuEwQgpHrHDQPGCY1Wx4ujXYkOEk/9c63tW9dA6pnNo6YyDWjkHmz/mC4hXCXQT4gEs708GlkPzpV1qqUO46Vp34dybv2MzYtgoty0hYic2b7eo67SgQjQqlufr8NZVH/8QXjYOSCU4v9iCwSPXmP9bCFA1R0xXVNfAp86B/XhauavATgCO14csr6Z+TsdSe9WxGtr45IGpLMG/M/xteU4jMH88d4yO4UjFIKVwH/Yugvm+UOx3zA6Pig9EwnvJvg3tqI6z4S6pAckL7eYG1/W5Jjl750+iEVh//U1o/tW9wN5n8kX04uuNhM1m+kR2Q0xf0Cfc0Iehf+gG+OKYZwwPFFhGNEoW990Ko/VEK6ZetfI7VwQ1v63G71PjWUyMrH0q69Et5rY/t2+V/YADhfAv4oYkckGnA/+9j0TV2zf3DBNTa7leY0xAgDmgdQSROuqNMvXEgPZBPYkNeTORAkv3v+uPxDh3JoYEG3YXFNRjckXdjAwqneVA0RCStIiD8pjtAwO82XWrFnGsA0ZlPgsiFg2QEBoVI8cvnWMnxfnfGV6XSd5zHiC935Gi5b7HPgfYhUZWnzRJIKRWhNgR5xw+xL/jGoL+G8Q6qakG+10wViMhY0ZHVGkwGIdDvkfuGRDu9uYId9gBkqWO9gxAy1C+9OP7UTdHNz9LzwdNHRLrGiuf3c9x9uMOzy/LQ0e7GFf0+rw3P2Qqk8/tz9l2HnJQt//GLHaJrfVTTpdIIqs0BPa+Z8CT9X5HsQCunXr5H5SLHyUOWcdrqqfqWe09kp1kW7ZLoys58bUEWltwpswR/x9lItefupqHHj4Nf9dc66IBbReScogorhtBDJTyR7Mzg/68ZBLJmzv8B3TUCuVGf1/1+7pfgPsQA833trLq75xXxOggQfWtL8kNbWABTy9h6O9OaN/CMzaLoO80c1VFaKDp/BprOJ2WVjMv2OUGH8LeHR/fT/b9pv0BJyQCz3VvfrzfgIPohFR7RR4gjyHd2ZVVGQhYCEeoA1/XfpOtWFr9x5arVtevoLRGLnuRLGinCiWiE3BS5spGdSSswWtu2Uti8elicFJ+a/pXjWnr3GpqC9cTFpgzJ3/Lhdq8xokQWKjdY8LhI4VSNbVjEMIbuvRvMc4OvUVNMakvaZrRKLdUcr09UYoB5b2kOGckAPN5NhS8Q7M5sIkXYSFF+lZvOy8WDvjAzyw3BFk0hi0fnaeVy8xoXuV1WJsHjmLyV693Segj54NXzFQ6zkT8btZxneiG+WVFZ27lhYZ+4q9KrWYgrqGtfrYC7q1/FEikeTqbaI/zCxzLfw+w4OwNcwaQ/itBAFCn/OjG97aEioHrpCPx922FNcSq3mcubm8CakFY7i6xk5WSe/9y6wIQ6Kj6yYmLCpHuc8dy2cg9waQCapFirmVwSOgIhoYB7aM2mfDlyqNLHntPy7zZRjNpNeTpcUJsD9Fm0FIU6yZJi1RC9ZABai9zsm2MWqZjM8QS9v2v9MksGEMujagFHrrV2WDpezFjbFrE/CAdDayh7IX5gSgvwqYuUyZVI/tsk9lYboa+Kl0INCCIDfp2lgTgNynYyXvqvT/m1Zmgl4ivpm2k84vkqYcqD+aoq018qT2dahmfyOSnVlWhcYYp3MEnq5rBbmoV/ANd+gByVozC/g1VBLLUwBhWhuW1G/DTp44n4n/LNhmd31hRYb+42oOA22BwjtlXmTxwQFxH4Zvlsey9lVBnk1gmDLeczBhMDsird4c/5GEe+R9lYbTGLSqKGQE8Qm6t5zWjrv4WDWtgKd4j7Y5zuMUIjnO2PClbLqNhqmcTOIxsqtwLvmy73+LuqWo0Nd/RNvPvUuUjIRr686MybVhHsrMWJi6HoN6FAYMuKd4I/Crde1a5EzQm91tGGtTBHnZi3YCO3dVecjwsza9GHxFIlFrnk7ygM2QpC4P8kACksOx8WVFLbpR6UFfu2YCtC3HJddoDW+V1TrH/7NNyAzVDEj94VfQJ3uWYLnu8x4YOh0wiK+IWF6/njSKAym0cPZShZtRAsCgUcDKEJpSrnDg4dOyvrpKhol+rxQ+jakotxMoTeFZnCO5/IcPmlVNWN44vagAIycuv9fASz9grdyHvmQVr7lvlHWg+gsHUuBD0lBKcjXE89VEqhQDNzEk8/sI+0UXUhFakGI93iO+bfDUz2IBBH0cmiu9YqUVCW1b75y0bBrU2OmQ4t6ndyyfXH761A6fGmb/qFgN0N7uySUWV45/ikxQBVDrZE8u3WmlIJrQjkNT4OpD+LWzbzGi1QxhvArZnhXJPO5n+8dP3NYxV46MjL5i2kU89fOYtIOucbnblcQTA5jUNsqAc2IKKT6/pnlmvTXrvg3UcQevwX2gx8qTJNbOJYfmQTRI0RFhnncNCnoZJ3AN4H13f4NPsE5nLvznQLz423B0ntdp/R3Seph3us9wxSLxyChYGf93DVcRdQXjPE8eoBvzIGtHRKXneNCsBPcWkjXrhoIJwyfCiFfdl9239qThvEfUBRn2p6HZqbKYwSgz3yU2Mjr2RkWk7GT0EA5MFJO4g/95UrkFCX5Xlzogl0QYcfYT+Wu4gZ7mHJ6P2f53AXPOC5oAeX849G01x6KLqdanGGdmdHFJYmDYxw4eVmFSnsvqsP7EbEbbXirg5pQwjcbdcGeJLL/j9EhBsCq4Rx4Wop7vYaykuMhgu2vZUde5wcTXzDF4PFzu+N3qfxvBhRg4jHBHix0ceSYoix8ho6TYi4PndwKWw7a/RZikH0IFT9M9Ao0m/Kl4mK9W5cyThhQZLp6Czb0ftVYUIUQNfUU9lxUwHzPqzNzRFjkCrnth/3NUmLLnPs3wBcD0zrfsWFEiFmuFRioBH3+b5E44uB3j2yUY0AeFqvGzN5mO3e+fNQrb4rGvzGR8XwTrB/TqpyC+k2NaHgAUXu0U/QszFbEhRzaeYcmEQu/VLrazVnJyovcMVkbeaPixNbVlZCRYXuTRtqGUTVu32NanWCcF4uT9CUxorN1oMH0gIYtrg0YyNin5P/tWF4hshKTX6ErbiiKVv6ojtTj3xmDkdhfXVnKHzRXxbTxeX4Gsrg+SLd4JLnec1Fyjgy6lbEuVr8gM7Nl/fFppd9NmZrEllw/7EQ/WxnAJq8qfdC8ehp1Sn5v+Z3ui21kiT/m99ytzCuYKy94XKBaaBhBTLZNg2Y3vvqxz6nOPtDwSvr/zi+9BiT3C5qfAUKjUGU8f9cP5F4+5UmINrCpNawe5tnTx0Hwyb53aVkQDLDa27/0OPtUhRqidx0j6wzFZJEE7QdzR6m3yeBNll1PC1WllSb/W7fywO5HvYPWMUsVHHVtf2duJ8FcD8uwNW/qZoLnJ72tN5aaJk1DZf/1Iy1ofe3JjIBancwvgcS60IIKMGkkBLU+XA4uLe5KCoM+cwDrjYsqywUrg7TxGGZH3PueBB4v3lMIAxjxfdV0GhuU2WFrXU0HXM0kZIjfraooF+qjYMQ0YjzIDSDVtGH/WUu3KN35OiOTrq9N6G8NOlrbt0Zw612PCyIdnZ4BQGtG5tLR4ZQ9o70+b/laR9Dl4c59YgjxysO/ybVgEDWL/STjlN6r55gOtasTKOYu0/qDaRPpAXqbSm0itbwO2oy/r7u7Issr7gbvwVm/qVHd+CLeqEa1zbbfjsdzS3GFwmtiulusPCTqIN0ZabZPhKi69EyET/E6yKjA/VGfchTwU89L7JL5IdHcsxYAmdZzIYrzJmQK3OZbdTaSy0zFseCzjo0jeBKP2x3BnI8ZjXOnXwbayQEqe6TBDRL+bcPH6dgn5sgLTTNCEKwWEbSUDc5qOQEqR28ryXQF2ynbI1wLjn2xirF0rQGzPoVu6HN/W6mbat988wDGegryiG80o/mduzjf4K7RIaLFGvW4kct6Wyahu3ULLcAUDi3yJoUwGM2KgyOfppyq1OzSiaECL1JeZwofrFM518VKkYwqwUkVsq5UVjsdZHyhgWAoG18qARBBg8Og9+H7its+EYws7Lmi1obhWN4eLz4tq/eXUEdgCrGOIr1DRlSCAi7e4IUf/yminLDCg7TYUfTXMSAUHdG9s60Pz3krLZgRbhQ9ylqfo/yfo7cRU1xTCCLIWK0nCV+of0VR6yYpic221Vi/zKG1td9LUspFdQkkWJ4Pq2AtdU6WXHuiaRZtEDYTJ15a3lv8ANa1nh6IKhv5/h4A/OdT/EDlVswm7VP8g2MuKO+D3k5wsPYzCPUtkOykjkzLYdHwBvd60jlVCARTfj2CgPgEaz/a9TfCkxb8xqkU7+QETv79gj3wJ1RKn4I3lXIE2e87iUMRoyG+KE8on6y6z4Sir2Ciqai9XN/BjvnkiFwYSuDfnaUqy24rke616EbCfkBAiU0K1Rqo2KGfsB0hCd9CkRFWHMZp/bSsCedK5w7Ob5gbrjHeEEE+3N236ybKGl5J0ps0ML8Nrj7bKXtziU6HHPfDFVX/Po5oA8QojKh4Xl8U89f1ji0AwdOvG91XhPO9zOTqnwpmzbTqcRGO4xvcJemkuV5mC/ELz0NBIo6rUBGDKo07sLqRkLS7RjTdz3P5s5uUq1sx4XLoi1DiOjYCsLAE32D50RQ09vve43QC3XGWOcNYUDOv4KYYuy2EcO4WVuatwaQjEU0UG0FJjA4JsVIQUo7iSsNo6YpPhyPfaKFoslJBwNc38yBwYAd3jY/Sse3ztS5XH8NQxRLvLnAmNfZL8XGkOb2OhresvqcvESy1zLLDzCqsjiHgxegwi80DWxc1nufU/Xz+YCbJZgd7kTnPfCufYFsyfZ7HDeApmTxriXguNUfjPxN15IlobX83O5uXrpyejtXT1XZ0FEx3Yuw4bKnh5Qgwh/GS8GEfnjEBebcMsund2vFWWxL9zr3yse1hwUdNHoh/zlc8Cp+fh8AiLN/pU1Bzr1gB+s0q5bmf3iO8+8FFJEFU8dqYhov0f+rQJrpvfTvLfbo2lqHZe+fg4OoAYoQd9tA395EI/C+rvFf7+cuGFF/H0szLsSq8yaVKVfsWGbH06JfTq3ED7Pe8UDAAdJ9GCeGUNin/cwDbZK8GVQ2l5Lvdf4v6h1RjKbG++qqT/EwE2onAudZVrCodv3DOtaTL+vyRUK9wUIxI0UtrMYc+sm0skq4tJniGgsABMm7+5frqRleV9I/xHQwSh2dUdRPjHCtPB7D+RkW9QjOmDkOfkUyERAeGZo9ytBOnAEyTanAiGr6qf+whAb90yKdd9g985xERtd936Id4U4TNzk0sBYTyyVoV9th1bl7u1wvGGBt/bzOWuSmeZ7/gsXjVVPS3vKJrNKcBZZV3zFnU9jn2o6k9IVV4tJL2NZ+XLlouJJYqWA75Nb7vNNHJvjx/aKW/lyAKRNnXg60rAn+rtjKxAKkG/3Tu/GmC6Cx/XigZRS2JPxMP3HfX27pdblJMIgv0WnEIiFtPM1arU++7xowYcyHvGgS1qTdVqwkMxzfDALY27yvwFGnnOC5MzEtWIXxUUIjVsVlca4R/LnP3uVbWFhUR6c8p7tK4U8voMGUKQwGuoJQcyqcdGUZOh1LtIya8anS6l7pj0i5uUeSyk+TGJHYbk5EfKxP9Yb9KL+KnigyVGB+vjiTwPcAI1rcb0jV9tMWdtNs3qRj22hIz0sS9eoSXsTiwmZyTB/oesGdzoKt+U6TtK0HxwlKy1UxD3LrrMIhojSrh0nbZZdxnuoUWMADylwJfwwB5cfcv+EJngebx2nRQvZ0eFV8dZGG/vAMJ9LKML8OrPqG+I+gFxDRM3a67RlCBQobyGHc0+ztbF4RBOd/vab7hzScPDtDwg7QX76WRS2EPFc5sFY3zW8VBlth3saRo3W6NLxXJ9Ve1LDfKAe1zwEeGVnfkXnscsZD3yD0CAMjg08xfLlQfgkiITIRF2Dhnm2hQ4jPvOkgXIUTeqvxGaZAHTThWG8y85zhHnk3PQOBbsnztE+jR+U/3z9Sl1+BFDQBGYmrItCv5ago+9ofi2HSDxYq+6YNGypNcfIiOIJtxFNNyP6TjCH7ceR0U74sfTXY6AGY6GHgyYE3lpeMiBYYhp4IFAI4h9mfuokPN6BkXxdcLDjy6kEblmm7u5zE5rm/vSbS1GIril9X+y78VXwREvnzUltJdgT9vDO9f6NcWRBgMOByITsSIWRLlOQ1lLL9Igf+oucNthyEvF1PRyOCQHZQjv9CMBfeRU73YwBygogI65knSUk7ogu5t49YxWX9SyJ5p6XixAdvGV94FXrCib59D7FyuSXImiunT/qbI2zC5DnlriLYyYCYy23HJSoUqXaBfKC4Y3NY75PwfocpCd6yiMNpwBQFhtSXhzvJI+Pv/ARSEO1TTg+cCxH87YcASc5LASO4V77OtqOhkbMw8SbGISJDVP3CASsh73Qg6iSAIleU5Vpb0H4/3U1X5IekikoxvM4VC4u9K+McndqKQZnnd1LPXl0gCMF8kmtuXZG0iyn78HMX3c+aeAFc37uQznRIz8K9XvlyF6a0laqRY1XyU+OCX2OIDZN9P5tOGE94pFzXbcLLDGJgNrbIvTTK+mKI10pyBIEW0ye1iAFyqotI76glm1AGX/SoKY2+gaL2lkkciiD/0x5NH1UrfPUT6xvwiHA4BNRDi27pAdvWcJ/1lelVLW9mLKwHPConmMAruTYSGQ4qeMXqgqafJaV67KS/0okv6BwZ+A9wpj7hqYVFakzTxWU6nvPN3+11J32/8BsoGO9IkPE5xVViwvAGvuIzdBKSeU6qENvqFjlbFqk5BwA5dmH1oWUCs4sf+Wf7DTQkPHV7cx/IfANWREtn+29CpzzEoryYhx9dHVQNNcLyA06Jgv4kP9dBGc2dvvPkH+Gpwrua7PBgHrZ0kRhPkhTQQBPFen09x9eDdBJCMP/K7OYTILoZlSgoH+4CpUSSVh1ldQoQUIu8eJ5rrAqGbq7kgxRRCS5qiKwPINMw7MpcjG5jSbYXX7ihse/eaFiljZvaVrx1pglcpJ31S1YGsySoVYEdUS7ptH08P30dvaJ8c/kNzZtKefm2c+Ur1OilxW2mgAS6EX1bl7hEOLMiypG17lHne6mDP/oooepa8XDpY5Y3ztiwyzq0oFgOSS4ywDqe0KDRjuBLl4729H4I440jZQfmgB6fXJ6P/bbdLG/yIBfgyB+1poBQpZ+fh+Ay3HErTnxubRR40LDQ8ha+mrTu9RwBwgFjF++Y8Ypjbk3nXS2vR7Ej+2FxJTodZo3vbRyEVkqIZ0YeBwCONrADeZuJAAHnVpmtpVfr+wHUUnZpp34QBT4kGZa4wm0WsTldul0iFCdpj2Rki8GR2uP4MgPhYq5QP4/tmiGk8WjXf9ISF/QwXtm/YINfDGekYH7/OtJPFyhn7eRF1cEpv+r0k9XsaN1hbtuDqcxY/nOhQohX4VpnZlzBjQYXvpykSEXXseKDpakdvXa0uxKD/Svwyt+5+1pkrxg8H6j4S7h6/r8/IA+6I6WqXMmvsR/fi3nMvMU+teRgVyGrL5fgVYPV+4xNh+hbrfDYsVYO375EjbUPrnBn2pF6pK9A4BwMAZgVMGo2R4v6lmGja/bdge6QGetwU40hrDoVm8tPpD67Vb8yLaLHvt/AZfO2tnEqfa3/CDbjzqT2Ya0BxBVyfB/p8dhp/5HLjBiWIOR6LvBr1Xm/lfmlGnyFu9JaosC7vVjuhvW8UiAf+YRKuLID38ZyrOp4CYYiCdFYHdKcKLxVpcAY5WQ+6EgQMBNiRgfa51uMGcgJ2xDuGYgRf5JTgdJicezp1M/hcuaSa1vzbezxlPLDL5ote8kUJO6YA69kr7dP/MH0bO4VE4ag4hl7JwwSxRmG3U53+9BYIVoKGzkwJQgFcv5B/wTmYuv5SnTry/cYQDQH0zp0O3VuL3OtM5FJRErb9KBMp+RHeesLneQd0bCCHbd7FxIN/f6hkdKdBzPPAfBpY6cCclHfFX0NpFBUUCAoActPUF7V+704nGbZOHqIIrSp5Y16Zjp/Cj2k+MeMzKdYtwhdyH2q4+UQ6siQkZ8609p52qGtba16oLOrAkTC4k94IulAi/SCTdit9mJQM2u8UMGkVI695luTnrbDoDv47XqDl1sOH8bar+ZUzJZlLHrkmEuh6bMtOZT1T8AXjM8hj3strWNLgrHp5sHGbB5ZYGjGLBLQH45iTSLp9ZpDoID31Eo53JDnrcMfLdayxYhdM5Kf7/SoyMYoinID+hcuqblL4Jneb/36ex2RPkYRLX8myf3rlXzx+OKS/paXjw0iztC+F+ynytMTTHDziSMIoCux3oWbrYBEHfSSc4V7ykKI2vR9cDZiiMXTjtU4yc/efSuciRrO0q/kUdUlRCjckrgSgnwV2FHRFwYeUZZHIzrHXL8m+hn7EDiHQbjZBfXLgnIWgFJ+U6CdIhZdPXGKY9cKlYzUyQ1cUOUKEntbNhMnoj56Hd0Hiil3H9DtG52NDgtTEQQobQg8hDtsWgNb49omU3NKJNzKE49p8xxK9mvoDUh0N67LgftWxG4pyPFgV18ThL/x8j+bB/jNL3scuU1GHueC7U91A28c60dyQZSNvPBwwpYOgTRam+ZugK8XPiir2LIJrRLTlx2mOgQ2oFFDvC/byhNg8qw1gfPB6jFVDeLrHe4jx7qvMGHDrwDW/HJ7dJ/ktppO/NF3fudFmv8iIlGBUZqB3PSap2qTJ7tiPVHuRW9bp2uavjPHFCfSVmzoGlmIAAqiF0yNeWAGR62CVYmuaIr9hoEo4sZgWRNEDVrAkR4Jf/feVRYoxrwtivdR0HEfncpE0GHo/G3aiz9lQy6htqa6nBGhXS2dztQk/vFdm0IMIjUeKlsUR1L4nmhvtWt9v+XrCUEQMpKjKcFjAaF4EnFQE5gbDFmRyY7FjWoXDUPieSFoud+JwBdI9JpTusFuE6eBEHjEEh+2AqoNwUJ+LX9gymZ6j38YWF7qUfBNFQQyEf4dUyZ8Li2Aq0fXJwd6z0xCRRLcHdjlwKmYI/c2UKI+GCEyUkLn4PLlQiD1HfMCRBtvxH9kxJefBevU1O+734HIeWN0p98oCcF7L9unXGjTFd8wRgi539Br9vYT2wOAAHotUdqFNf0IoldpjLIy/Dqg8LBUhuFHSC5C8PUvcJetye8MYI1b6a6h2WKqxljFGomYeorhlrTXdIGL69TyXCn4Aq3+Vx+BQSq0mBZUIDFGKtw8ZB5jBoMyBRLNR+Q61aMnNHcERpsTj+cm89tSmSeiGKsqoWBP5Pbhz7oYxBSf7xy/mjYMngWfBM2go3UONgwfKsFzm7AAAAABZ3a9cBkJllSZ4AwiGsm51wmhV3P87GBqayV//Z1vA6AajJjQhqfIpnBLOB9wvXQHp9nqjWLc6k5ntslxOyvflL8Kv5xDRUmV92iGkDvxECHQKQDVqmzhB01QieYTObwAg4qGmEJhLlD2doTHB01qeupy4ZeYXnKmiK3hCpQ4V+f32Ulcj/gYlqN7qiV8pDa7833o6Emrpz3t6ABqcXOPjLMhpYJNDdV6uOVPm1GZ3agpQJQaTvJH5FYg/4DL7f8LXXE7NjxnRIMT2iU/lJ5aDkSZIrvukRF32yus1U2lNDODvM6QULseiyN/uB9FDB0cY8jy1UAjQd21WuHxGfx5avRWhH6iQTk0bOE3lVOTlydFIAOYoMSRLmfoTavrn1MT7jCHTKmk22QakYtCnwFa0NnS79DDdd0BApru1FnMcLrF680gOqNw7SHmF4WlofxxfHSe7lvuukyRC6UgmEMxyAYyZJeKIkcjp03GQl+581mBzYaoA0/blF6CGL0xSOM8IDIJBdHxEfTspuyDkkSID6ArnhGdGa0TIx2jght478izaNa9Mecw/nkb8gh2xyzxdbc7O9g5EABQy6X7k/TaHS5v2OF5CEA1i8s2tJfJBoCk3JB2TJPd2vRpEQ5cj/fHNVI57hFCE2JkmDyujJeMEsWeNx5P7fglqmh8fQHpL94BtTCG7UkPycSZJrY+DSqNTfSLJMh2pJ+JCHE7T4jryqO3Fj12Vesi4uGbfcTImdvJbQgcLtPnI1GcNTxW9TWzaqPfnx75xIDZkms0gAaXB2cNBRhZzPed2OXEQd9LugFORN4EPluYyZKJ+uhwp2Up1MX4vpdnRqVrqH3VUQOtSwbSYmntokLOPeQxRhhKb1yF39t47SSh5v+PjX8N4BO/D9hqZdhxlkvw5i4CEThata96SsKFSehR8WGi918CqkHj6PY6qSVlFi+QpIy19sXV1u6/vJQPh+RST1pjuqUIo1vQ7PhzYMfUQFW/kCpOc+9kuJ03FvMfFAuzNGmsmf7fuaA9U/u0s6N6RpuWTb2JQ5aKEFKSyaRH8uoQ7joAQXEAkieWmAACkfQABEJAAAAAAAAA==" alt="Logo Prof. Giuseppe Fumuso – Meccatronica" width="75" height="64">
+    <div class="brand">
+      <h1>Comparatore</h1>
+      <small>Laboratorio di metrologia · Meccatronica</small>
+    </div>
+    <nav class="tabs" aria-label="Sezioni">
+      <a href="#strumento" data-view="strumento">Lo strumento</a>
+      <a href="#principio" data-view="principio">Il principio</a>
+      <a href="#simulatore" data-view="simulatore">Simulatore</a>
+      <a href="#esercizio" data-view="esercizio">Esercitazione</a>
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button">☾ Scuro</button>
+  </div>
+  <div class="ruler" aria-hidden="true"></div>
+</header>
+
+<main>
+
+<!-- ===================== VISTA 1: LO STRUMENTO ===================== -->
+<section class="view" id="view-strumento">
+  <div class="intro">
+    <span class="eyebrow">Strumento di misura per confronto</span>
+    <h2>Il comparatore a quadrante e digitale</h2>
+    <p class="lead">Il comparatore misura lo spostamento dell'asta di misura e lo amplifica su un quadrante o lo mostra su un display. Si usa soprattutto per confronto: si azzera su un riferimento di quota nota e si legge di quanto il pezzo è più grande o più piccolo. Passa il mouse sulle voci per evidenziare la parte nel disegno.</p>
+  </div>
+  <div class="panel">
+    <div class="duo">
+      <div class="figure"><svg class="mic" id="svg-parts-a" role="img" aria-label="Comparatore analogico con le parti numerate"></svg></div>
+      <div class="figure"><svg class="mic" id="svg-parts-d" role="img" aria-label="Comparatore digitale con le parti numerate"></svg></div>
+    </div>
+    <ul class="parts" id="parts-list"></ul>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Caratteristiche</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Tipo</th><th>Risoluzione</th><th>Corsa/giro</th><th>Divisioni</th><th>Corsa tipica</th></tr></thead>
+        <tbody>
+          <tr><td>Analogico centesimale</td><td class="mono">0,01 mm</td><td class="mono">1 mm</td><td class="mono">100</td><td class="mono">10 mm</td></tr>
+          <tr><td>Analogico millesimale</td><td class="mono">0,001 mm</td><td class="mono">0,2 mm</td><td class="mono">200 (0–100–0)</td><td class="mono">1 mm</td></tr>
+          <tr><td>Digitale</td><td class="mono">0,01 / 0,001 mm</td><td>—</td><td>—</td><td class="mono">12,7 mm</td></tr>
+        </tbody>
+      </table></div>
+      <dl class="spec">
+        <dt>Cannotto</dt><dd>Gambo cilindrico di fissaggio, normalmente Ø 8 mm, serrato nel supporto.</dd>
+        <dt>Contagiri</dt><dd>Piccolo quadrante che conta i giri della lancetta principale.</dd>
+        <dt>Ghiera</dt><dd>Quadrante girevole: si ruota per portare lo zero sotto la lancetta (azzeramento).</dd>
+        <dt>Indici di tolleranza</dt><dd>Due indici regolabili sul bordo che delimitano la zona di accettazione.</dd>
+      </dl>
+    </div>
+    <div class="panel">
+      <h3>Buone pratiche di misura</h3>
+      <ul class="checklist">
+        <li>Fissa il comparatore su un supporto rigido (base magnetica o colonna) e il pezzo su un piano di riscontro pulito.</li>
+        <li>Tieni l'asta di misura perpendicolare alla superficie: un'asta inclinata dà letture maggiori del vero.</li>
+        <li>Dai un precarico all'asta (circa 0,2–1 mm) prima di azzerare: così la lancetta può muoversi in entrambi i versi.</li>
+        <li>Azzera sul riferimento (blocchetti piano-paralleli o pezzo campione), poi sostituisci il riferimento con il pezzo.</li>
+        <li>Solleva l'asta con il cappuccio per inserire o togliere il pezzo, senza farlo strisciare sotto il puntale.</li>
+        <li>Senso orario = valori positivi (pezzo più alto del riferimento); senso antiorario = valori negativi.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 2: IL PRINCIPIO ===================== -->
+<section class="view" id="view-principio" hidden>
+  <div class="intro">
+    <span class="eyebrow">Principio di funzionamento</span>
+    <h2>Amplificazione a ingranaggi e misura per confronto</h2>
+    <p class="lead">L'asta di misura porta una cremagliera che fa ruotare un pignone. Una coppia di ruote dentate moltiplica la rotazione e la trasmette alla lancetta: nel centesimale 1 mm di corsa dell'asta corrisponde a un giro completo, cioè a 100 divisioni da 0,01 mm. Una molla a spirale elimina il gioco tra i denti e una molla di richiamo riporta l'asta verso il basso.</p>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Il meccanismo</h3>
+      <div class="lens-box" style="height:300px"><svg id="svg-mecc" role="img" aria-label="Schema cremagliera, pignone e ruote dentate" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="field">
+        <label class="label" for="pr-s">Spostamento dell'asta s [mm]</label>
+        <input type="range" id="pr-s" min="0" max="200" step="1" value="37">
+      </div>
+      <p id="pr-s-text"></p>
+    </div>
+    <div class="panel">
+      <h3>Lettura su un quadrante centesimale</h3>
+      <div class="lens-box" style="height:300px"><svg id="svg-pr-dial" role="img" aria-label="Quadrante centesimale" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <p>La lancetta grande indica i centesimi; il contagiri indica i millimetri interi (giri completi). Esempio: contagiri tra 2 e 3, lancetta su 37 → 2,37 mm.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>Formule</h3>
+    <div class="formulas">
+      <div class="formula"><code>r = p<sub>g</sub> / n</code><span>Risoluzione [mm]: p<sub>g</sub> = corsa per giro (1 mm o 0,2 mm), n = divisioni del quadrante (100 o 200)</span></div>
+      <div class="formula"><code>α = 360° · s / p<sub>g</sub></code><span>Rotazione della lancetta [°] per uno spostamento s dell'asta [mm]</span></div>
+      <div class="formula"><code>L = G · p<sub>g</sub> + k · r</code><span>Lettura diretta [mm]: G = giri sul contagiri, k = divisioni della lancetta</span></div>
+      <div class="formula"><code>H = Q + Δ</code><span>Misura per confronto [mm]: Q = quota del riferimento, Δ = scostamento letto (+ orario, − antiorario)</span></div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Misura per confronto · esempio</h3>
+      <div class="lens-box" style="height:300px"><svg id="svg-example" role="img" aria-label="Esempio di misura per confronto" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <ol class="steps">
+        <li><div><b>Riferimento.</b> Si compone una pila di blocchetti piano-paralleli di quota Q = 25,00 mm e si appoggia sotto il puntale.</div></li>
+        <li><div><b>Precarico e zero.</b> Si abbassa il comparatore finché l'asta rientra di circa 1 mm, poi si ruota la ghiera per portare lo 0 sotto la lancetta.</div></li>
+        <li><div><b>Pezzo.</b> Si solleva l'asta, si toglie il riferimento e si inserisce il pezzo.</div></li>
+        <li><div><b>Lettura.</b> La lancetta ruota in senso orario di 13 divisioni: Δ = +0,13 mm.</div></li>
+        <li><div><b>Risultato.</b> H = Q + Δ = 25,00 + 0,13 = 25,13 mm.</div></li>
+      </ol>
+    </div>
+    <div class="panel">
+      <h3>Impieghi tipici in officina</h3>
+      <ul class="checklist">
+        <li><b>Controllo dimensionale per confronto</b> di serie di pezzi uguali rispetto a un campione.</li>
+        <li><b>Eccentricità (run-out)</b> di un albero fatto ruotare tra le punte o nel mandrino del tornio.</li>
+        <li><b>Planarità e parallelismo</b> spostando il pezzo sul piano di riscontro sotto il puntale.</li>
+        <li><b>Centraggio</b> di un pezzo sul mandrino del tornio o sulla tavola della fresatrice.</li>
+        <li><b>Verifica di accettazione</b> con gli indici di tolleranza: il pezzo è conforme se la lancetta resta tra i due indici.</li>
+      </ul>
+      <p>Nel millesimale il quadrante è "bilanciato" (0–100–0): i numeri crescono a destra e a sinistra dello zero, e il segno si ricava dal verso di rotazione.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 3: SIMULATORE ===================== -->
+<section class="view" id="view-simulatore" hidden>
+  <div class="intro">
+    <span class="eyebrow">Spiegazione alla lavagna</span>
+    <h2>Simulatore</h2>
+    <p class="lead">Sposta l'asta con i pulsanti, con il cursore o trascinando in verticale sul disegno. Con "Azzera" la ghiera ruota (o il display si azzera) e le letture successive diventano scostamenti dal nuovo zero.</p>
+  </div>
+  <div class="sim" id="sim-root">
+    <div class="panel controls">
+      <div class="field"><span class="label">Strumento</span><div class="seg grid" id="sim-t" role="group" aria-label="Strumento"></div></div>
+      <div class="field" id="sim-dres-f"><span class="label">Risoluzione del display</span><div class="seg" id="sim-dres" role="group" aria-label="Risoluzione del display"></div></div>
+      <div class="field">
+        <label class="label" for="sim-input">Spostamento dell'asta s [mm]</label>
+        <div class="num-in"><input id="sim-input" type="text" inputmode="decimal" autocomplete="off"></div>
+        <input type="range" id="sim-range" min="0" max="10000" step="10" aria-label="Spostamento dell'asta">
+        <div class="btn-row">
+          <button class="btn" id="sim-mg" type="button">−1 giro</button>
+          <button class="btn" id="sim-mr" type="button">−r</button>
+          <button class="btn" id="sim-pr" type="button">+r</button>
+          <button class="btn" id="sim-pg" type="button">+1 giro</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="sim-zero" type="button">Azzera</button>
+          <button class="btn" id="sim-unzero" type="button">Togli zero</button>
+        </div>
+        <button class="btn" id="sim-rand" type="button">Posizione casuale</button>
+      </div>
+      <div class="field">
+        <label class="label" for="sim-tol">Indici di tolleranza ± [mm]</label>
+        <div class="num-in"><input id="sim-tol" type="text" inputmode="decimal" value="0,05" autocomplete="off"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="sim-show" checked> Visualizza la misura</label>
+      <label class="check"><input type="checkbox" id="sim-hl" checked> Evidenzia zero e scostamento</label>
+      <button class="btn" id="sim-fs" type="button">Schermo intero</button>
+    </div>
+    <div class="panel">
+      <div class="readout" id="sim-readout"></div>
+      <div class="chips" id="sim-chips"></div>
+      <div class="cmp-box"><svg class="drag-y" id="sim-svg" role="img" aria-label="Comparatore su supporto: trascina in verticale per spostare l'asta" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div class="legend"><span><i style="background:var(--cal-zero)"></i>Zero della ghiera</span><span><i style="background:var(--cal-mark)"></i>Scostamento Δ</span><span><i style="background:var(--tol)"></i>Zona di tolleranza</span><span>Tastiera: ↑ ↓ passo r, Maiusc + ↑ ↓ 0,1 mm</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== VISTA 4: ESERCITAZIONE ===================== -->
+<section class="view" id="view-esercizio" hidden>
+  <div class="intro">
+    <span class="eyebrow">Esercitazione di lettura</span>
+    <h2>Leggi la misura</h2>
+    <p class="lead">Nella lettura diretta si legge lo spostamento dell'asta da zero. Nella misura per confronto il comparatore è già azzerato su un riferimento di quota Q: leggi lo scostamento Δ con il suo segno e calcola la quota del pezzo H = Q + Δ.</p>
+  </div>
+  <div class="sim">
+    <div class="panel controls">
+      <div class="field"><span class="label">Livello</span><div class="seg grid" id="ex-level" role="group" aria-label="Livello"></div></div>
+      <p class="lead" id="ex-level-desc" style="font-size:.9rem"></p>
+      <div class="field"><span class="label">Strumento (personalizzato)</span><div class="seg grid" id="ex-t" role="group" aria-label="Strumento personalizzato"></div></div>
+      <div class="field"><span class="label">Modalità (personalizzato)</span><div class="seg" id="ex-mod" role="group" aria-label="Modalità personalizzata"></div></div>
+      <form class="field" id="ex-form" autocomplete="off">
+        <label class="label" for="ex-answer" id="ex-answer-lbl">La tua lettura [mm]</label>
+        <div class="num-in"><input id="ex-answer" type="text" inputmode="decimal" placeholder="es. 25,13"></div>
+        <div class="btn-row">
+          <button class="btn primary" type="submit" id="ex-check">Verifica</button>
+          <button class="btn" type="button" id="ex-hint">Suggerimento</button>
+        </div>
+        <button class="btn" type="button" id="ex-new">Nuova misura</button>
+      </form>
+    </div>
+    <div class="panel">
+      <div class="score" id="ex-score"></div>
+      <div class="chips" id="ex-chips"></div>
+      <div class="pezzo" id="ex-pezzo" hidden></div>
+      <div class="cmp-box"><svg id="ex-svg" role="img" aria-label="Comparatore dell'esercizio" preserveAspectRatio="xMidYMid meet"></svg></div>
+      <div id="ex-feedback"></div>
+      <div class="table-wrap"><table id="ex-hist"></table></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+/* =====================================================================
+   PROGRAMMA – SIMULATORE DI COMPARATORE (analogico 0,01 e 0,001 mm, digitale)
+   Tutte le grandezze lineari sono memorizzate in micrometri (µm) interi:
+   1 mm = 1000 µm. Così 0,01 mm = 10 µm e 0,001 mm = 1 µm, senza errori
+   di arrotondamento sui decimali.
+   Disegno: centro del quadrante in (0, 0); asse y verso il basso;
+   angoli misurati dalle ore 12 in senso orario.
+   ===================================================================== */
+
+// ---------- DATI DEI TRE STRUMENTI ----------
+const TIPI = {
+  c: { nome: "Analogico 0,01", pg: 1000, n: 100, corsa: 10000, k: 6, cont: 10 },   // pg = corsa per giro [µm], n = divisioni, corsa [µm], k = scala del disegno [unità/mm], cont = divisioni del contagiri
+  m: { nome: "Analogico 0,001", pg: 200, n: 200, corsa: 1000, k: 40, cont: 5 },
+  d: { nome: "Digitale", corsa: 12700, k: 5 },
+};
+const RAD = Math.PI / 180;               // gradi → radianti
+
+// ---------- FUNZIONI DI SUPPORTO ----------
+const $ = (id) => document.getElementById(id);                      // cerca un elemento
+const limita = (v, a, b) => Math.max(a, Math.min(b, v));            // limita v tra a e b
+const casuale = (a, b) => a + Math.floor(Math.random() * (b - a + 1));   // intero casuale tra a e b
+
+// Risoluzione in µm dello strumento: 10 (0,01 mm) o 1 (0,001 mm)
+function risoluzione(tipo, dres) {
+  if (tipo === "c") return 10;           // centesimale
+  if (tipo === "m") return 1;            // millesimale
+  return dres;                           // digitale: scelta dell'utente
+}
+
+// Scrive µm come mm in stile italiano, con le cifre adatte alla risoluzione
+function mm(um, res) {
+  return (um / 1000).toFixed(res === 1 ? 3 : 2).replace(".", ",");
+}
+// Come mm() ma con il segno sempre esplicito (+ / −)
+function mmS(um, res) {
+  return (um > 0 ? "+" : um < 0 ? "−" : "±") + mm(Math.abs(um), res);
+}
+
+// Converte il testo dell'utente in µm (accetta segno, virgola, punto, "mm"); NaN se non valido
+function leggiUm(txt) {
+  const p = String(txt).trim().replace(/mm$/i, "").trim().replace(",", ".").replace("−", "-");   // pulizia
+  if (!/^[+-]?\d+(\.\d+)?$/.test(p)) return NaN;     // numero con eventuale segno e decimali
+  return Math.round(parseFloat(p) * 1000);           // conversione in µm interi
+}
+
+// Punto sulla circonferenza di raggio r all'angolo a (gradi dalle ore 12, senso orario)
+function pol(r, a) {
+  return [r * Math.sin(a * RAD), -r * Math.cos(a * RAD)];
+}
+
+// ---------- DISEGNO DEL COMPARATORE ----------
+// o = { tipo, dres, s, s0, tol, uid, zero, delta, setup, pezzo, richiami }
+//   s, s0 : spostamento dell'asta e posizione dello zero [µm]
+//   tol    : semiampiezza della tolleranza [µm] (0 = indici non mostrati)
+//   zero   : evidenzia lo zero; delta: evidenzia lo scostamento
+//   setup  : disegna supporto, piano di riscontro e pezzo
+function disegnaComparatore(o) {
+  const T = TIPI[o.tipo];                // dati dello strumento
+  const u = o.uid;                       // prefisso degli id
+  const dig = o.tipo === "d";            // strumento digitale?
+  const sMm = o.s / 1000;                // spostamento in mm
+  const corsaMm = T.corsa / 1000;        // corsa in mm
+  const L0 = corsaMm * T.k + 18;         // lunghezza dell'asta sporgente a riposo
+  const yTip = 150 + L0 - sMm * T.k;     // inizio del puntale (l'asta rientra quando s cresce)
+  const yTop = (dig ? -82 : -100);       // bordo superiore del corpo
+  const yCap = yTop - 10 - sMm * T.k;    // posizione del cappuccio (esce in alto quando s cresce)
+  const P = 150 + L0 + 10 + 30;          // quota del piano di riscontro
+  const bordo = `stroke="var(--steel-edge)" stroke-width="1" vector-effect="non-scaling-stroke"`;   // contorno
+  let h = `<defs>
+    <linearGradient id="${u}-g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--steel-hi)"/><stop offset=".55" stop-color="var(--steel-mid)"/><stop offset="1" stop-color="var(--steel-lo)"/></linearGradient>
+    <linearGradient id="${u}-v" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="var(--steel-lo)"/><stop offset=".45" stop-color="var(--steel-hi)"/><stop offset="1" stop-color="var(--steel-mid)"/></linearGradient>
+    <pattern id="${u}-hat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M 0 0 V 6" stroke="var(--mat-edge)" stroke-width="0.8"/></pattern>
+  </defs>`;
+
+  // --- Supporto, piano di riscontro e pezzo ---
+  if (o.setup) {
+    h += `<rect x="-175" y="${P}" width="350" height="22" fill="var(--granite)"/>`;                              // piano di riscontro
+    h += `<rect x="-168" y="${P - 10}" width="50" height="10" rx="2" fill="url(#${u}-v)" ${bordo}/>`;          // base del supporto
+    h += `<rect x="-150" y="-60" width="14" height="${P - 10 + 60}" fill="url(#${u}-v)" ${bordo}/>`;           // colonna
+    h += `<rect x="-140" y="112" width="128" height="14" fill="url(#${u}-v)" ${bordo}/>`;                      // braccio
+    h += `<rect x="-17" y="104" width="34" height="30" rx="3" fill="url(#${u}-g)" ${bordo}/>`;                 // morsetto sul cannotto
+    h += disegnaPezzoSotto(o.pezzo, yTip + 10, P, u);                                                          // pezzo tra puntale e piano
+  }
+
+  // --- Asta di misura, puntale e cappuccio ---
+  h += `<rect x="-3.5" y="${yCap + 8}" width="7" height="${yTip - yCap - 8}" fill="url(#${u}-v)" ${bordo}/>`;   // asta (passa dentro al corpo)
+  h += `<rect x="-7" y="${yCap}" width="14" height="10" rx="2" fill="url(#${u}-g)" ${bordo}/>`;                 // cappuccio
+  h += `<circle cx="0" cy="${yTip + 5}" r="5" fill="var(--carbide)" ${bordo}/>`;                                 // puntale sferico
+  h += `<rect x="-9" y="${dig ? 80 : 98}" width="18" height="${150 - (dig ? 80 : 98)}" fill="url(#${u}-v)" ${bordo}/>`;   // cannotto
+
+  if (dig) h += corpoDigitale(o, u, bordo);   // corpo con display
+  else h += quadrante(o, T, u, bordo);        // corpo con quadrante
+
+  if (o.richiami) h += richiami(o, yTip, yCap);
+  return { svg: h, P };
+}
+
+// Corpo analogico: ghiera, scala, contagiri, lancetta, indici di tolleranza
+function quadrante(o, T, u, bordo) {
+  const beta = ((o.s0 / T.pg) * 360) % 360;   // rotazione della ghiera: porta lo zero dove stava la lancetta all'azzeramento
+  const alfa = (o.s / T.pg) * 360;             // angolo della lancetta principale
+  let h = "";
+  h += `<circle cx="0" cy="0" r="104" fill="url(#${u}-g)" ${bordo}/>`;                     // ghiera zigrinata
+  h += `<circle cx="0" cy="0" r="104" fill="none" stroke="var(--steel-edge)" stroke-width="3" stroke-dasharray="1 2" opacity=".5"/>`;   // zigrinatura
+  const [vx, vy] = pol(108, 215);                                                           // vite di bloccaggio della ghiera
+  h += `<circle cx="${vx}" cy="${vy}" r="6" fill="url(#${u}-v)" ${bordo}/><path d="M ${vx - 4} ${vy} H ${vx + 4}" stroke="var(--steel-edge)" stroke-width="1.4"/>`;
+  h += `<circle cx="0" cy="0" r="92" fill="var(--face)" ${bordo}/>`;                       // quadrante bianco
+
+  // Zona e indici di tolleranza
+  if (o.tol > 0) {
+    const da = (o.tol / T.pg) * 360;           // ampiezza angolare della tolleranza
+    if (da < 179) {
+      const [x1, y1] = pol(88, beta - da), [x2, y2] = pol(88, beta + da);
+      h += `<path d="M ${x1} ${y1} A 88 88 0 0 1 ${x2} ${y2}" stroke="var(--tol)" stroke-width="6" fill="none" opacity=".35"/>`;   // zona di accettazione
+      for (const a of [beta - da, beta + da]) {                                                // due indici sul bordo
+        const [ax, ay] = pol(93, a), [bx, by] = pol(106, a - 3), [cx, cy] = pol(106, a + 3);
+        h += `<path d="M ${ax} ${ay} L ${bx} ${by} L ${cx} ${cy} Z" fill="var(--tol)" stroke="var(--mat-edge)" stroke-width="0.6"/>`;
+      }
+    }
+  }
+
+  // Tacche della scala (ruotate con la ghiera)
+  let tr = "";
+  for (let k = 0; k < T.n; k++) {
+    const a = beta + (k / T.n) * 360;          // angolo della tacca k
+    const lung = k % 10 === 0 ? 11 : (k % 5 === 0 ? 8 : 5);   // lunghe ogni 10, medie ogni 5
+    const [x1, y1] = pol(90, a), [x2, y2] = pol(90 - lung, a);
+    tr += `M ${x1.toFixed(2)} ${y1.toFixed(2)} L ${x2.toFixed(2)} ${y2.toFixed(2)} `;
+  }
+  h += `<path d="${tr}" stroke="var(--engrave)" stroke-width="${T.n > 100 ? 0.6 : 0.9}" fill="none"/>`;
+
+  // Numeri della scala (restano diritti, si spostano con la ghiera)
+  for (let k = 0; k < T.n; k += 10) {
+    const a = beta + (k / T.n) * 360;
+    const [x, y] = pol(70, a);
+    const val = T.n === 100 ? k : (k <= 100 ? k : 200 - k);   // centesimale 0…90; millesimale 0–100–0
+    h += `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" font-size="${T.n === 100 ? 12 : 9.5}" text-anchor="middle" fill="var(--engrave)">${val}</text>`;
+    if (T.n === 100 && k > 0) {                                // centesimale: numeri rossi antiorari per i valori negativi
+      const [xr, yr] = pol(56, a);
+      h += `<text x="${xr.toFixed(1)}" y="${(yr + 3).toFixed(1)}" font-size="8" text-anchor="middle" fill="var(--dial-red)">${100 - k}</text>`;
+    }
+  }
+  if (T.n === 200) {                                           // millesimale: segni + e −
+    const [px, py] = pol(52, beta + 30), [mx, my] = pol(52, beta - 30);
+    h += `<text x="${px}" y="${py + 4}" font-size="12" text-anchor="middle" fill="var(--engrave)">+</text><text x="${mx}" y="${my + 4}" font-size="12" text-anchor="middle" fill="var(--dial-red)">−</text>`;
+  }
+  h += `<text x="0" y="-26" font-size="9" text-anchor="middle" fill="var(--engrave)">${T.pg === 1000 ? "0,01 mm" : "0,001 mm"}</text>`;   // risoluzione
+  h += `<text x="0" y="-15" font-size="6.5" text-anchor="middle" fill="var(--muted-ink)">${T.pg === 1000 ? "1 mm/giro" : "0,2 mm/giro"}</text>`;
+
+  // Contagiri (non ruota con la ghiera)
+  const cy = 36;                                               // centro del contagiri
+  h += `<circle cx="0" cy="${cy}" r="18" fill="var(--face)" stroke="var(--engrave)" stroke-width="0.6"/>`;
+  for (let j = 0; j < T.cont; j++) {
+    const a = (j / T.cont) * 360;
+    const [x1, y1] = pol(17, a), [x2, y2] = pol(13.5, a), [xt, yt] = pol(9.5, a);
+    h += `<path d="M ${x1} ${y1 + cy} L ${x2} ${y2 + cy}" stroke="var(--engrave)" stroke-width="0.7"/>`;
+    h += `<text x="${xt}" y="${yt + cy + 2.2}" font-size="6" text-anchor="middle" fill="var(--engrave)">${j}</text>`;
+  }
+  const ac = (o.s / T.pg) * (360 / T.cont);                    // un giro della lancetta = una divisione del contagiri
+  const [cx2, cy2] = pol(15, ac);
+  h += `<path d="M 0 ${cy} L ${cx2} ${cy2 + cy}" stroke="${o.zero ? "var(--cal-zero)" : "var(--engrave)"}" stroke-width="1.6" stroke-linecap="round"/><circle cx="0" cy="${cy}" r="2" fill="var(--engrave)"/>`;
+
+  // Evidenziazioni: zero della ghiera e arco dello scostamento
+  if (o.zero) {
+    const [x1, y1] = pol(91, beta), [x2, y2] = pol(76, beta);
+    h += `<path d="M ${x1} ${y1} L ${x2} ${y2}" stroke="var(--cal-zero)" stroke-width="2.6"/>`;
+  }
+  if (o.delta && o.s !== o.s0) {
+    const d = ((o.s - o.s0) / T.pg) * 360;                     // angolo dello scostamento (con segno)
+    if (Math.abs(d) < 359) {
+      const [x1, y1] = pol(82, beta), [x2, y2] = pol(82, beta + d);
+      h += `<path d="M ${x1} ${y1} A 82 82 0 ${Math.abs(d) > 180 ? 1 : 0} ${d > 0 ? 1 : 0} ${x2} ${y2}" stroke="var(--cal-mark)" stroke-width="5" fill="none" opacity=".55"/>`;
+    }
+  }
+
+  // Lancetta principale
+  const [lx, ly] = pol(84, alfa), [tx, ty] = pol(-18, alfa);
+  h += `<path d="M ${tx} ${ty} L ${lx} ${ly}" stroke="var(--needle)" stroke-width="2" stroke-linecap="round"/>`;
+  h += `<circle cx="0" cy="0" r="5" fill="var(--needle)"/><circle cx="0" cy="0" r="2" fill="var(--steel-hi)"/>`;
+  return h;
+}
+
+// Corpo digitale: display LCD e tre pulsanti
+function corpoDigitale(o, u, bordo) {
+  const res = o.dres;                                          // risoluzione in µm
+  const d = o.s - o.s0;                                        // valore mostrato: spostamento dallo zero
+  const dr = Math.round(d / res) * res;                        // arrotondato alla risoluzione
+  const testo = (dr < 0 ? "-" : " ") + (Math.abs(dr) / 1000).toFixed(res === 1 ? 3 : 2);   // il display usa il punto decimale
+  let h = "";
+  h += `<rect x="-98" y="-82" width="196" height="164" rx="26" fill="var(--body-dark)" ${bordo}/>`;          // corpo
+  h += `<rect x="-78" y="-62" width="156" height="62" rx="6" fill="var(--lcd-bg)" stroke="#11161b" stroke-width="2"/>`;   // display
+  h += `<text x="58" y="-18" font-size="34" text-anchor="end" font-weight="600" fill="var(--lcd-fg)" style="font-family:var(--f-mono)">${testo}</text>`;
+  h += `<text x="70" y="-46" font-size="9" text-anchor="end" fill="var(--lcd-fg)">mm</text>`;
+  h += `<text x="-70" y="-46" font-size="8" fill="var(--lcd-fg)">${res === 1 ? "0.001" : "0.01"}</text>`;
+  if (o.s0 !== 0) h += `<text x="-70" y="-6" font-size="7" fill="var(--lcd-fg)">INC</text>`;   // indica che è attivo uno zero relativo
+  const tasti = [["ON/OFF", -55], ["ZERO", 0], ["mm/in", 55]];   // pulsanti
+  for (const [t, x] of tasti) {
+    h += `<circle cx="${x}" cy="34" r="15" fill="${t === "ZERO" && o.zero ? "var(--cal-zero)" : "#4a525c"}" stroke="#11161b" stroke-width="1.5"/>`;
+    h += `<text x="${x}" y="60" font-size="8" text-anchor="middle" fill="#dfe5ec">${t}</text>`;
+  }
+  return h;
+}
+
+// Pezzo sotto il puntale, tra la quota yA (puntale) e il piano P
+function disegnaPezzoSotto(p, yA, P, u) {
+  const hP = P - yA;                                           // altezza disponibile
+  const id = p ? p.id : "blocchetto";                          // senza pezzo: blocchetto generico
+  const mat = p ? (MATERIALE[p.id] || "steel") : "steel";
+  const f = `fill="var(--mat-${mat})" stroke="var(--mat-edge)" stroke-width="1" vector-effect="non-scaling-stroke"`;
+  const sl = `stroke="var(--mat-edge)" stroke-width="0.8" fill="none"`;
+  switch (id) {
+    case "perno": case "sfera": case "albD": {                 // pezzi cilindrici o sferici: si vedono come cerchi
+      let h = `<circle cx="0" cy="${yA + hP / 2}" r="${hP / 2}" ${f}/>`;
+      if (id === "albD") h += `<circle cx="0" cy="${yA + hP / 2}" r="${hP / 3}" ${sl}/>`;   // gradino minore
+      if (id === "sfera") h += `<ellipse cx="${-hP * 0.15}" cy="${yA + hP * 0.32}" rx="${hP * 0.12}" ry="${hP * 0.07}" fill="#fff" opacity=".45"/>`;
+      if (id === "perno") h += `<path d="M ${-hP / 2 - 6} ${yA + hP / 2} H ${hP / 2 + 6} M 0 ${yA - 6} V ${P + 4}" stroke="var(--mat-edge)" stroke-width="0.6" stroke-dasharray="8 2 1.5 2" fill="none"/>`;
+      return h;
+    }
+    case "cuscB":                                              // cuscinetto appoggiato di fianco
+      return `<rect x="-70" y="${yA}" width="140" height="${hP}" rx="3" ${f}/><path d="M -58 ${yA} V ${P} M 58 ${yA} V ${P} M -40 ${yA} V ${P} M 40 ${yA} V ${P}" ${sl}/>`;
+    case "rondS": case "lam":                                  // piastrine: sezione tratteggiata
+      return `<rect x="-80" y="${yA}" width="160" height="${hP}" ${f}/><rect x="-80" y="${yA}" width="160" height="${hP}" fill="url(#${u}-hat)"/>`;
+    default:                                                   // blocchetto piano-parallelo generico
+      return `<rect x="-60" y="${yA}" width="120" height="${hP}" rx="2" fill="url(#${u}-g)" stroke="var(--steel-edge)" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+  }
+}
+
+// Richiami numerati (disegni della vista "Lo strumento")
+function richiami(o, yTip, yCap) {
+  const lista = o.tipo === "d"
+    ? [[10, [-150, -95], [[-60, -40]]], [11, [-150, 40], [[-55, 34]]], [12, [-60, 112], [[0, 46]]], [13, [150, 40], [[55, 34]]], [5, [60, 125], [[9, 120]]], [6, [60, yTip - 10], [[3.5, yTip - 10]]], [7, [60, yTip + 18], [[5, yTip + 5]]], [8, [60, yCap - 6], [[7, yCap + 4]]]]
+    : [[1, [140, -100], [[72, -75]]], [2, [150, 10], [[pol(50, (o.s / TIPI[o.tipo].pg) * 360)[0], pol(50, (o.s / TIPI[o.tipo].pg) * 360)[1]]]], [3, [-150, 50], [[-16, 36]]], [4, [-150, -100], [[pol(100, -36)[0], pol(100, -36)[1]]]], [9, [-150, 100], [[pol(108, 215)[0], pol(108, 215)[1]]]], [5, [60, 125], [[9, 125]]], [6, [60, yTip - 10], [[3.5, yTip - 10]]], [7, [60, yTip + 18], [[5, yTip + 5]]], [8, [60, yCap - 6], [[7, yCap + 4]]]];
+  let h = "";
+  for (const [num, c, punti] of lista) {
+    h += `<g class="co" data-n="${num}">`;
+    for (const p of punti) h += `<line x1="${c[0]}" y1="${c[1]}" x2="${p[0]}" y2="${p[1]}" style="stroke-width:1.2"/><circle cx="${p[0]}" cy="${p[1]}" r="2.4"/>`;
+    h += `<circle cx="${c[0]}" cy="${c[1]}" r="12"/><text x="${c[0]}" y="${c[1] + 4.6}" font-size="13" text-anchor="middle">${num}</text></g>`;
+  }
+  return h;
+}
+
+// Inserisce il disegno in un SVG con l'inquadratura corretta
+function mostraComparatore(svg, o) {
+  const r = disegnaComparatore(o);
+  const yMin = o.tipo === "d" ? -165 : -185;                 // spazio per il cappuccio
+  const yMax = o.setup ? r.P + 22 : 150 + TIPI[o.tipo].corsa / 1000 * TIPI[o.tipo].k + 18 + 30;
+  svg.setAttribute("viewBox", `${o.setup ? -178 : -175} ${yMin} ${o.setup ? 356 : 350} ${yMax - yMin}`);
+  svg.innerHTML = r.svg;
+}
+
+// =====================================================================
+// VISTA 1 – LO STRUMENTO
+// =====================================================================
+const PARTI = [
+  [1, "Ghiera girevole", "Porta la scala; si ruota per portare lo zero sotto la lancetta."],
+  [2, "Lancetta principale", "Un giro = 1 mm (centesimale) o 0,2 mm (millesimale)."],
+  [3, "Contagiri", "Conta i giri della lancetta principale, cioè i mm (o i 0,2 mm)."],
+  [4, "Indici di tolleranza", "Delimitano la zona di accettazione del pezzo."],
+  [5, "Cannotto", "Gambo di fissaggio Ø 8 mm, serrato nel supporto."],
+  [6, "Asta di misura", "Scorre nel cannotto; porta la cremagliera che muove gli ingranaggi."],
+  [7, "Puntale", "Sferico e intercambiabile, a contatto con il pezzo."],
+  [8, "Cappuccio", "Sulla sommità dell'asta: serve a sollevarla per inserire il pezzo."],
+  [9, "Vite di bloccaggio ghiera", "Blocca la ghiera dopo l'azzeramento."],
+  [10, "Display (digitale)", "Mostra il valore con segno; risoluzione 0,01 o 0,001 mm."],
+  [11, "Tasto ON/OFF", "Accende e spegne lo strumento."],
+  [12, "Tasto ZERO", "Azzera il display nella posizione attuale (misura per confronto)."],
+  [13, "Tasto mm/in", "Cambia l'unità di misura tra millimetri e pollici."],
+];
+
+function initStrumento() {
+  const a = $("svg-parts-a"), d = $("svg-parts-d");
+  mostraComparatore(a, { tipo: "c", dres: 10, s: 2370, s0: 0, tol: 100, uid: "pa", richiami: true });
+  mostraComparatore(d, { tipo: "d", dres: 1, s: 2370, s0: 0, tol: 0, uid: "pd", richiami: true });
+  const ul = $("parts-list");
+  ul.innerHTML = PARTI.map((p) => `<li data-n="${p[0]}"><span class="num">${p[0]}</span><div><b>${p[1]}</b><span>${p[2]}</span></div></li>`).join("");
+  const accendi = (n, on) => {                                   // evidenzia voce e richiami con lo stesso numero
+    for (const g of document.querySelectorAll(`#view-strumento .co[data-n="${n}"]`)) g.classList.toggle("on", on);
+    ul.querySelector(`li[data-n="${n}"]`)?.classList.toggle("on", on);
+  };
+  for (const el of [...ul.children, ...document.querySelectorAll("#view-strumento .co")]) {
+    el.addEventListener("mouseenter", () => accendi(el.dataset.n, true));
+    el.addEventListener("mouseleave", () => accendi(el.dataset.n, false));
+  }
+}
+
+// =====================================================================
+// VISTA 2 – IL PRINCIPIO
+// =====================================================================
+// Schema del meccanismo: cremagliera → pignone z1 + ruota z2 → pignone z3 della lancetta
+function disegnaMeccanismo() {
+  const s = +$("pr-s").value / 100;      // spostamento in mm (0–2)
+  const svg = $("svg-mecc");
+  svg.setAttribute("viewBox", "-150 -110 300 220");
+  const z1 = 16, z2 = 100, z3 = 10, m = 0.2;      // esempio di numeri di denti e modulo [mm]
+  const th1 = -(s / (Math.PI * m * z1)) * 360;    // rotazione del pignone sulla cremagliera (antioraria quando l'asta sale)
+  const th3 = -th1 * z2 / z3;                     // rotazione del pignone della lancetta (verso opposto: oraria)
+  const ky = 22;                                  // scala verticale del disegno [unità/mm]
+  let h = "";
+  const C = [-20, 0];                             // centro dell'albero di pignone z1 e ruota z2
+  // Ruota dentata z2 (dietro), cremagliera, pignone z1 (davanti), pignone z3 e lancetta
+  const ruota = (cx, cy, r, z, th, fill) => {
+    let g = `<g transform="rotate(${th.toFixed(2)} ${cx} ${cy})"><circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="var(--steel-edge)"/>`;
+    for (let i = 0; i < z; i++) { const a = i * 360 / z; const [x1, y1] = pol(r, a), [x2, y2] = pol(r + 3, a); g += `<path d="M ${cx + x1} ${cy + y1} L ${cx + x2} ${cy + y2}" stroke="var(--steel-edge)" stroke-width="1.4"/>`; }
+    return g + `<path d="M ${cx} ${cy} L ${cx} ${cy - r + 3}" stroke="var(--cal-mark)" stroke-width="2"/></g>`;   // segno arancio per vedere la rotazione
+  };
+  h += ruota(C[0], C[1], 58, 40, th1, "var(--steel-hi)");    // ruota grande z2 (denti ridotti nel disegno)
+  h += `<rect x="-50" y="${-100 - s * ky}" width="14" height="200" fill="var(--steel-mid)" stroke="var(--steel-edge)"/>`;   // asta con cremagliera (sale quando s cresce)
+  let denti = "";
+  for (let y = -100; y < 100; y += 6) denti += `M -36 ${y - s * ky} l 3 3 l -3 3 `;   // denti della cremagliera
+  h += `<path d="${denti}" fill="var(--steel-lo)" stroke="var(--steel-edge)" stroke-width="0.6"/>`;
+  h += ruota(C[0], C[1], 13, 10, th1, "var(--steel-mid)");   // pignone z1, coassiale alla ruota z2
+  h += ruota(49, 0, 8, 8, th3, "var(--steel-mid)");          // pignone z3 della lancetta
+  const [lx, ly] = pol(70, th3);                             // lancetta solidale a z3
+  h += `<path d="M 49 0 L ${49 + lx} ${ly}" stroke="var(--needle)" stroke-width="2.4" stroke-linecap="round"/><circle cx="49" cy="0" r="3" fill="var(--needle)"/>`;
+  h += `<text x="-43" y="104" font-size="9" text-anchor="middle" fill="var(--fg)">asta</text><text x="-20" y="76" font-size="9" text-anchor="middle" fill="var(--fg)">z2 = ${z2}</text><text x="-20" y="-20" font-size="8" text-anchor="middle" fill="var(--fg)">z1 = ${z1}</text><text x="49" y="22" font-size="9" text-anchor="middle" fill="var(--fg)">z3 = ${z3}</text>`;
+  svg.innerHTML = h;
+  const giri = (s * z2 / z3) / (Math.PI * m * z1);           // giri della lancetta
+  $("pr-s-text").innerHTML = `Con z1 = ${z1}, z2 = ${z2}, z3 = ${z3} e modulo ${String(m).replace(".", ",")} mm (valori di esempio), uno spostamento s = <b>${s.toFixed(2).replace(".", ",")} mm</b> fa compiere alla lancetta <b>${giri.toFixed(2).replace(".", ",")} giri</b> (circa 1 giro per mm).`;
+}
+
+function initPrincipio() {
+  $("pr-s").addEventListener("input", disegnaMeccanismo);
+  disegnaMeccanismo();
+  const d = $("svg-pr-dial");                                 // quadrante dell'esempio di lettura diretta
+  d.setAttribute("viewBox", "-112 -112 224 224");
+  d.innerHTML = disegnaComparatore({ tipo: "c", dres: 10, s: 2370, s0: 0, tol: 0, uid: "pq", zero: true, delta: true }).svg;
+  const e = $("svg-example");                                 // esempio di confronto: Δ = +0,13 mm
+  mostraComparatore(e, { tipo: "c", dres: 10, s: 1130 + 130 + 0, s0: 1130, tol: 0, uid: "pe", zero: true, delta: true, setup: true, pezzo: { id: "perno" } });
+}
+
+// =====================================================================
+// VISTA 3 – SIMULATORE
+// =====================================================================
+const SIM = { tipo: "c", dres: 10, s: 2370, s0: 0, tol: 50, show: true, hl: true };   // stato iniziale
+
+function disegnaSimulatore() {
+  const T = TIPI[SIM.tipo];                                  // strumento scelto
+  const res = risoluzione(SIM.tipo, SIM.dres);               // risoluzione [µm]
+  SIM.s = limita(Math.round(SIM.s / res) * res, 0, T.corsa); // posizione multipla della risoluzione, entro la corsa
+  SIM.s0 = limita(SIM.s0, 0, T.corsa);
+  segnaAttivo($("sim-t"), SIM.tipo);
+  segnaAttivo($("sim-dres"), SIM.dres);
+  $("sim-dres-f").hidden = SIM.tipo !== "d";                 // risoluzione del display solo per il digitale
+  $("sim-range").max = String(T.corsa);
+  $("sim-range").step = String(res);
+  $("sim-range").value = String(SIM.s);
+  if (document.activeElement !== $("sim-input")) $("sim-input").value = mm(SIM.s, res);
+  const giro = SIM.tipo === "d" ? 1000 : T.pg;               // passo dei pulsanti "giro" (1 mm nel digitale)
+  $("sim-mg").textContent = SIM.tipo === "d" ? "−1 mm" : "−1 giro";
+  $("sim-pg").textContent = SIM.tipo === "d" ? "+1 mm" : "+1 giro";
+  $("sim-mr").textContent = "−" + mm(res, res);
+  $("sim-pr").textContent = "+" + mm(res, res);
+  $("sim-mg").dataset.passo = String(-giro);
+  $("sim-pg").dataset.passo = String(giro);
+  const d = SIM.s - SIM.s0;                                  // scostamento dallo zero
+  let why = `Spostamento dell'asta s = ${mm(SIM.s, res)} mm`;
+  if (SIM.s0) why += ` · zero impostato a ${mm(SIM.s0, res)} mm`;
+  if (SIM.tipo !== "d") {
+    const giri = Math.floor(SIM.s / T.pg);                   // giri completi (contagiri)
+    const div = Math.round((SIM.s - giri * T.pg) / res);     // divisioni oltre i giri
+    why += ` · contagiri: ${giri} ${T.pg === 200 ? "(× 0,2 mm)" : "mm"} · lancetta: ${div} div. dallo 0 della scala fissa`;
+  }
+  const tol = SIM.tol > 0 ? (Math.abs(d) <= SIM.tol ? ` · <span class="ok-t">entro la tolleranza ±${mm(SIM.tol, res)}</span>` : ` · <span class="err-t">fuori tolleranza ±${mm(SIM.tol, res)}</span>`) : "";
+  $("sim-readout").innerHTML = SIM.show
+    ? `<div class="big">${SIM.s0 ? mmS(d, res) : mm(d, res)} <small>mm ${SIM.s0 ? "(Δ dallo zero)" : ""}</small></div><div class="why">${why}${SIM.s0 ? tol : ""}</div>`
+    : `<div class="big">––,–– <small>mm</small></div><div class="why">Misura nascosta: falla leggere alla classe.</div>`;
+  $("sim-chips").innerHTML = chipStrumento(SIM.tipo, res);
+  mostraComparatore($("sim-svg"), { tipo: SIM.tipo, dres: SIM.dres, s: SIM.s, s0: SIM.s0, tol: SIM.s0 || SIM.tol ? SIM.tol : 0, uid: "s", zero: SIM.hl, delta: SIM.hl, setup: true, pezzo: null });
+}
+
+// Etichette con le caratteristiche dello strumento
+function chipStrumento(tipo, res) {
+  const T = TIPI[tipo];
+  return `<span class="chip"><b>Strumento</b> ${T.nome}</span><span class="chip"><b>r</b> ${mm(res, res)} mm</span>` +
+    (tipo !== "d" ? `<span class="chip"><b>Corsa/giro</b> ${mm(T.pg, 10)} mm</span><span class="chip"><b>Divisioni</b> ${T.n}</span>` : "") +
+    `<span class="chip"><b>Corsa</b> ${mm(T.corsa, 10)} mm</span>`;
+}
+
+function initSimulatore() {
+  creaSegmenti($("sim-t"), ["c", "m", "d"], (t) => TIPI[t].nome, (t) => { SIM.tipo = t; SIM.s = Math.min(SIM.s, TIPI[t].corsa); SIM.s0 = 0; SIM.tol = t === "m" ? 5 : 50; $("sim-tol").value = mm(SIM.tol, risoluzione(t, SIM.dres)); disegnaSimulatore(); });
+  creaSegmenti($("sim-dres"), [10, 1], (r) => (r === 10 ? "0,01 mm" : "0,001 mm"), (r) => { SIM.dres = r; disegnaSimulatore(); });
+  const muovi = (dum) => { SIM.s += dum; disegnaSimulatore(); };   // sposta l'asta di dum µm
+  $("sim-mg").addEventListener("click", (e) => muovi(+e.currentTarget.dataset.passo));
+  $("sim-pg").addEventListener("click", (e) => muovi(+e.currentTarget.dataset.passo));
+  $("sim-mr").addEventListener("click", () => muovi(-risoluzione(SIM.tipo, SIM.dres)));
+  $("sim-pr").addEventListener("click", () => muovi(risoluzione(SIM.tipo, SIM.dres)));
+  $("sim-zero").addEventListener("click", () => { SIM.s0 = SIM.s; disegnaSimulatore(); });   // azzeramento
+  $("sim-unzero").addEventListener("click", () => { SIM.s0 = 0; disegnaSimulatore(); });
+  $("sim-rand").addEventListener("click", () => { SIM.s = casuale(0, TIPI[SIM.tipo].corsa); disegnaSimulatore(); });
+  $("sim-range").addEventListener("input", (e) => { SIM.s = +e.target.value; disegnaSimulatore(); });
+  $("sim-input").addEventListener("change", (e) => { const v = leggiUm(e.target.value); if (!isNaN(v)) SIM.s = v; e.target.blur(); disegnaSimulatore(); });
+  $("sim-tol").addEventListener("change", (e) => { const v = leggiUm(e.target.value); if (!isNaN(v)) SIM.tol = Math.abs(v); e.target.blur(); disegnaSimulatore(); });
+  $("sim-show").addEventListener("change", (e) => { SIM.show = e.target.checked; disegnaSimulatore(); });
+  $("sim-hl").addEventListener("change", (e) => { SIM.hl = e.target.checked; disegnaSimulatore(); });
+
+  // Trascinamento verticale: verso l'alto l'asta rientra (s aumenta)
+  const svg = $("sim-svg");
+  let y0 = null, s0 = 0, mmPx = 1;
+  svg.addEventListener("pointerdown", (e) => {
+    const vb = svg.viewBox.baseVal, r = svg.getBoundingClientRect();
+    mmPx = 1 / Math.min(r.width / vb.width, r.height / vb.height) / TIPI[SIM.tipo].k;   // mm di corsa per pixel
+    y0 = e.clientY; s0 = SIM.s; svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener("pointermove", (e) => { if (y0 === null) return; SIM.s = s0 + Math.round((y0 - e.clientY) * mmPx * 1000); disegnaSimulatore(); });
+  svg.addEventListener("pointerup", () => { y0 = null; });
+  svg.addEventListener("pointercancel", () => { y0 = null; });
+
+  document.addEventListener("keydown", (e) => {               // frecce su/giù
+    if (location.hash !== "#simulatore") return;
+    if (e.target.tagName === "INPUT" && e.target.type === "text") return;
+    if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+    const passo = e.shiftKey ? 100 : risoluzione(SIM.tipo, SIM.dres);
+    SIM.s += e.key === "ArrowUp" ? passo : -passo;
+    e.preventDefault();
+    disegnaSimulatore();
+  });
+
+  const fs = $("sim-fs");                                     // schermo intero
+  if (!document.fullscreenEnabled) fs.hidden = true;
+  fs.addEventListener("click", () => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else $("sim-root").requestFullscreen?.().catch(() => { fs.hidden = true; });
+  });
+  document.addEventListener("fullscreenchange", () => { fs.textContent = document.fullscreenElement ? "Esci da schermo intero" : "Schermo intero"; });
+}
+
+// =====================================================================
+// VISTA 4 – ESERCITAZIONE
+// =====================================================================
+const PEZZI_CMP = [                      // pezzi per la misura per confronto; q = intervallo delle quote nominali [mm]
+  { id: "perno", nome: "Perno rettificato", quota: "diametro", min: 6, max: 60 },
+  { id: "sfera", nome: "Sfera per cuscinetti", quota: "diametro", min: 5, max: 40 },
+  { id: "albD", nome: "Alberino rettificato", quota: "diametro", min: 8, max: 50 },
+  { id: "lam", nome: "Piastrina rettificata", quota: "spessore", min: 2, max: 30 },
+  { id: "rondS", nome: "Rondella di spessoramento", quota: "spessore", min: 1, max: 10 },
+  { id: "cuscB", nome: "Cuscinetto radiale a sfere", quota: "larghezza B", min: 8, max: 30 },
+];
+const LIVELLI = {
+  base: { nome: "Base", desc: "Analogico 0,01: lettura diretta dello spostamento dell'asta (contagiri + lancetta)." },
+  inter: { nome: "Intermedio", desc: "Analogico 0,01 per confronto: leggi Δ con il segno e calcola H = Q + Δ." },
+  avanz: { nome: "Avanzato", desc: "Analogico 0,001 per confronto, quadrante 0–100–0: attenzione al verso di rotazione." },
+  pers: { nome: "Personalizzato", desc: "Scegli tu strumento e modalità con i selettori qui sotto (il digitale è sempre per confronto)." },
+};
+const EX = {
+  livello: "base", tipo: "c", dres: 10, mod: "dir",            // domanda corrente
+  pt: "c", pmod: "conf",                                       // scelte del personalizzato
+  s: 0, s0: 0, Q: 0, tol: 0, pezzo: null,
+  risposto: false, aiuto: false, tot: 0, giuste: 0, serie: 0, storia: [], numero: 0,
+};
+
+function nuovaMisura() {
+  // Strumento e modalità secondo il livello
+  if (EX.livello === "base") { EX.tipo = "c"; EX.mod = "dir"; }
+  else if (EX.livello === "inter") { EX.tipo = "c"; EX.mod = "conf"; }
+  else if (EX.livello === "avanz") { EX.tipo = "m"; EX.mod = "conf"; }
+  else { EX.tipo = EX.pt === "d10" || EX.pt === "d1" ? "d" : EX.pt; EX.dres = EX.pt === "d1" ? 1 : 10; EX.mod = EX.tipo === "d" ? "conf" : EX.pmod; }
+  const T = TIPI[EX.tipo];
+  const res = risoluzione(EX.tipo, EX.dres);                   // risoluzione [µm]
+  if (EX.mod === "dir") {                                      // lettura diretta: zero a riposo
+    EX.s0 = 0; EX.Q = 0; EX.tol = 0; EX.pezzo = null;
+    EX.s = casuale(Math.round(T.corsa * 0.01 / res), Math.floor(T.corsa * 0.99 / res)) * res;
+  } else {                                                     // misura per confronto
+    EX.pezzo = PEZZI_CMP[casuale(0, PEZZI_CMP.length - 1)];     // pezzo casuale
+    EX.Q = casuale(EX.pezzo.min, EX.pezzo.max) * 1000;           // quota nominale = riferimento [µm]
+    const tolL = res === 10 ? [20, 50, 100] : [3, 5, 10];        // tolleranze possibili [µm]
+    EX.tol = tolL[casuale(0, 2)];
+    const maxD = Math.min(EX.tipo === "c" ? 450 : (EX.tipo === "m" ? 90 : 900), 2 * EX.tol + 3 * res);   // scostamento massimo (entro mezzo giro)
+    EX.s0 = Math.round(casuale(EX.tipo === "m" ? 200 : 500, EX.tipo === "m" ? 600 : 2000) / res) * res;   // precarico all'azzeramento
+    const dPassi = casuale(-Math.floor(maxD / res), Math.floor(maxD / res));   // scostamento in passi
+    EX.s = EX.s0 + dPassi * res;
+  }
+  EX.risposto = false; EX.aiuto = false; EX.numero++;
+  $("ex-answer").value = "";
+  $("ex-answer-lbl").textContent = EX.mod === "dir" ? "Spostamento letto [mm]" : "Quota del pezzo H [mm]";
+  const testo = EX.mod === "dir"
+    ? `leggi lo spostamento dell'asta da zero (${res === 1 ? "3" : "2"} decimali).`
+    : `il comparatore è azzerato su blocchetti di riscontro Q = ${mm(EX.Q, res)} mm. Leggi Δ e scrivi la quota H del pezzo.`;
+  $("ex-feedback").innerHTML = `<div class="feedback info">Esercizio ${EX.numero}: ${testo}</div>`;
+  disegnaEsercizio();
+}
+
+function disegnaEsercizio() {
+  const res = risoluzione(EX.tipo, EX.dres);
+  segnaAttivo($("ex-level"), EX.livello);
+  segnaAttivo($("ex-t"), EX.pt);
+  segnaAttivo($("ex-mod"), EX.pmod);
+  const pers = EX.livello === "pers";
+  for (const b of [...$("ex-t").children, ...$("ex-mod").children]) b.disabled = !pers;
+  $("ex-level-desc").textContent = LIVELLI[EX.livello].desc;
+  const perc = EX.tot ? Math.round(100 * EX.giuste / EX.tot) : 0;
+  $("ex-score").innerHTML = `<div><b>${EX.giuste}/${EX.tot}</b><span>Corrette</span></div><div><b>${perc}%</b><span>Precisione</span></div><div><b>${EX.serie}</b><span>Serie</span></div>`;
+  $("ex-chips").innerHTML = chipStrumento(EX.tipo, res) + (EX.mod === "conf" ? `<span class="chip"><b>Riferimento Q</b> ${mm(EX.Q, res)} mm</span><span class="chip"><b>Tolleranza</b> ±${mm(EX.tol, res)} mm</span>` : "");
+  $("ex-check").disabled = EX.risposto;
+  $("ex-hint").disabled = EX.risposto;
+  if (EX.pezzo) $("ex-pezzo").innerHTML = schedaPezzo(EX.pezzo, `per confronto: azzerato su blocchetti di riscontro Q = ${mm(EX.Q, res)} mm, tolleranza ±${mm(EX.tol, res)} mm (indici verdi sul quadrante).`);
+  $("ex-pezzo").hidden = !EX.pezzo;
+  mostraComparatore($("ex-svg"), { tipo: EX.tipo, dres: EX.dres, s: EX.s, s0: EX.s0, tol: EX.tol, uid: "e", zero: EX.aiuto || EX.risposto, delta: EX.risposto, setup: true, pezzo: EX.pezzo });
+  const righe = EX.storia.slice(-8).reverse().map((r) =>
+    `<tr><td class="mono">${r.num}</td><td>${r.str}</td><td>${r.pezzo}</td><td class="mono">${r.giusta}</td><td class="mono">${r.data}</td><td class="${r.ok ? "ok-t" : "err-t"}">${r.ok ? "Corretta" : "Errata"}</td></tr>`).join("");
+  $("ex-hist").innerHTML = EX.storia.length ? `<thead><tr><th>N.</th><th>Strumento</th><th>Pezzo</th><th>Risultato</th><th>Risposta</th><th>Esito</th></tr></thead><tbody>${righe}</tbody>` : "";
+}
+
+// Tipo di errore commesso
+function diagnosi(v, giusto, res) {
+  if (Math.abs(v) % res !== 0) return `Il risultato deve essere un multiplo della risoluzione (${mm(res, res)} mm).`;
+  if (EX.mod === "dir") {
+    const T = TIPI[EX.tipo];
+    if ((v - giusto) % T.pg === 0) return "Le divisioni della lancetta sono giuste: ricontrolla i giri sul contagiri.";
+    if (Math.floor(v / T.pg) === Math.floor(giusto / T.pg)) return "Giri del contagiri corretti: ricontrolla le divisioni della lancetta.";
+    return "Leggi prima il contagiri (giri completi), poi le divisioni della lancetta.";
+  }
+  const D = EX.s - EX.s0;                                     // scostamento corretto
+  if (D !== 0 && v === EX.Q - D) return "Segno invertito: rotazione oraria = Δ positivo (pezzo più grande del riferimento), antioraria = Δ negativo.";
+  if (v === D || v === Math.abs(D)) return `Hai scritto solo lo scostamento: aggiungi la quota del riferimento Q = ${mm(EX.Q, res)} mm.`;
+  if (EX.tipo === "c" && Math.abs(v - EX.Q) === 1000 - Math.abs(D)) return "Hai letto la scala sbagliata: per i valori negativi usa i numeri rossi (antiorari), oppure 100 − la lettura nera.";
+  return "Ricontrolla da che parte e di quante divisioni la lancetta si è spostata rispetto allo zero della ghiera.";
+}
+
+function verifica() {
+  if (EX.risposto) return;
+  const res = risoluzione(EX.tipo, EX.dres);
+  const v = leggiUm($("ex-answer").value);
+  if (isNaN(v)) {
+    $("ex-feedback").innerHTML = `<div class="feedback info">Scrivi un numero in millimetri, per esempio ${res === 1 ? "25,013" : "25,13"}.</div>`;
+    return;
+  }
+  const D = EX.s - EX.s0;                                     // scostamento
+  const giusto = EX.mod === "dir" ? EX.s : EX.Q + D;          // risultato atteso [µm]
+  const ok = v === giusto;
+  EX.risposto = true; EX.tot++;
+  if (ok) { EX.giuste++; EX.serie++; } else EX.serie = 0;
+  EX.storia.push({ num: EX.numero, str: TIPI[EX.tipo].nome + (EX.mod === "dir" ? " · diretta" : " · confronto"), pezzo: EX.pezzo ? EX.pezzo.nome : "—", giusta: mm(giusto, res), data: String($("ex-answer").value).trim(), ok });
+  let passi;
+  if (EX.mod === "dir") {
+    const T = TIPI[EX.tipo];
+    const G = Math.floor(EX.s / T.pg), k = (EX.s - G * T.pg) / res;   // giri e divisioni
+    passi = `<ol><li>Contagiri: <b>${G} giri</b> → ${G} · ${mm(T.pg, 10)} = ${mm(G * T.pg, res)} mm.</li><li>Lancetta: <b>${k} divisioni</b> → ${k} · ${mm(res, res)} = ${mm(k * res, res)} mm.</li><li>L = ${mm(G * T.pg, res)} + ${mm(k * res, res)} = <b>${mm(EX.s, res)} mm</b>.</li></ol>`;
+  } else {
+    const verso = D > 0 ? "oraria" : D < 0 ? "antioraria" : "nessuna";
+    const conforme = Math.abs(D) <= EX.tol;
+    passi = `<ol><li>${EX.pezzo.nome}: ${EX.pezzo.quota}, riferimento Q = ${mm(EX.Q, res)} mm.</li>
+      <li>${EX.tipo === "d" ? `Il display indica <b>${mmS(D, res)} mm</b>` : `Rotazione ${verso} di <b>${Math.abs(D) / res} divisioni</b> dallo zero della ghiera`}: Δ = <b>${mmS(D, res)} mm</b>.</li>
+      <li>H = Q + Δ = ${mm(EX.Q, res)} ${D < 0 ? "−" : "+"} ${mm(Math.abs(D), res)} = <b>${mm(giusto, res)} mm</b>.</li>
+      <li>Tolleranza ±${mm(EX.tol, res)} mm: il pezzo è <b class="${conforme ? "ok-t" : "err-t"}">${conforme ? "conforme" : "non conforme"}</b> (la lancetta è ${conforme ? "dentro" : "fuori dalla"} zona tra gli indici).</li></ol>`;
+  }
+  $("ex-feedback").innerHTML = ok
+    ? `<div class="feedback ok"><strong>Corretto: ${mm(giusto, res)} mm</strong>${passi}</div>`
+    : `<div class="feedback err"><strong>Non corretto: il risultato è ${mm(giusto, res)} mm</strong><p>${diagnosi(v, giusto, res)}</p>${passi}</div>`;
+  disegnaEsercizio();
+}
+
+function initEsercizio() {
+  creaSegmenti($("ex-level"), Object.keys(LIVELLI), (l) => LIVELLI[l].nome, (l) => { EX.livello = l; nuovaMisura(); });
+  creaSegmenti($("ex-t"), ["c", "m", "d10", "d1"], (t) => ({ c: "Analog. 0,01", m: "Analog. 0,001", d10: "Digit. 0,01", d1: "Digit. 0,001" })[t], (t) => { EX.pt = t; nuovaMisura(); });
+  creaSegmenti($("ex-mod"), ["dir", "conf"], (m) => (m === "dir" ? "Diretta" : "Confronto"), (m) => { EX.pmod = m; nuovaMisura(); });
+  $("ex-form").addEventListener("submit", (e) => { e.preventDefault(); verifica(); });
+  $("ex-new").addEventListener("click", nuovaMisura);
+  $("ex-hint").addEventListener("click", () => {
+    EX.aiuto = true;
+    $("ex-feedback").innerHTML = `<div class="feedback info">Suggerimento: ${EX.mod === "dir" ? "il tratto blu è lo zero della scala; leggi i giri sul contagiri (lancetta blu) e poi le divisioni della lancetta grande." : "il tratto blu è lo zero della ghiera impostato sul riferimento. Conta le divisioni tra lo zero e la lancetta: senso orario = +, antiorario = −."}</div>`;
+    disegnaEsercizio();
+  });
+  nuovaMisura();
+}
+
+// =====================================================================
+// SELETTORI A SEGMENTI E NAVIGAZIONE
+// =====================================================================
+function creaSegmenti(cont, valori, etichetta, alClic) {
+  cont.innerHTML = "";                   // svuota il contenitore
+  for (const v of valori) {
+    const b = document.createElement("button");   // nuovo pulsante
+    b.type = "button";
+    b.textContent = etichetta(v);
+    b.dataset.v = String(v);             // valore memorizzato nel pulsante
+    b.addEventListener("click", () => alClic(v));
+    cont.appendChild(b);
+  }
+}
+function segnaAttivo(cont, valore) {     // evidenzia il pulsante scelto
+  for (const b of cont.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.dataset.v === String(valore)));
+}
+const VISTE = ["strumento", "principio", "simulatore", "esercizio"];
+function mostraVista() {
+  const nome = location.hash.slice(1);
+  const attiva = VISTE.includes(nome) ? nome : "strumento";   // vista predefinita
+  for (const v of VISTE) $("view-" + v).hidden = v !== attiva;
+  for (const a of document.querySelectorAll(".tabs a")) {
+    if (a.dataset.view === attiva) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
+  }
+}
+
+// =====================================================================
+// TEMA CHIARO / SCURO
+// =====================================================================
+const CHIAVE_TEMA = "tema-laboratorio-metrologia";   // nome con cui il browser ricorda la scelta
+
+// Restituisce il tema mostrato in questo momento: "dark" oppure "light"
+function temaAttuale() {
+  const t = document.documentElement.dataset.theme;      // scelta esplicita (attributo data-theme)
+  if (t === "dark" || t === "light") return t;            // se presente, vale quella
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";   // altrimenti il tema del sistema
+}
+
+// Aggiorna il testo del pulsante: propone sempre il tema opposto
+function aggiornaPulsanteTema() {
+  const scuro = temaAttuale() === "dark";                 // tema attuale
+  $("theme-btn").textContent = scuro ? "☀ Chiaro" : "☾ Scuro";   // testo del pulsante
+  $("theme-btn").setAttribute("aria-pressed", String(scuro));         // stato per l'accessibilità
+}
+
+// Ripristina l'ultima scelta e collega il pulsante
+function initTema() {
+  try {
+    const salvato = localStorage.getItem(CHIAVE_TEMA);    // scelta salvata in precedenza
+    if (salvato === "dark" || salvato === "light") document.documentElement.dataset.theme = salvato;
+  } catch (e) { /* memoria del browser non disponibile: si usa il tema del sistema */ }
+  $("theme-btn").addEventListener("click", () => {
+    const nuovo = temaAttuale() === "dark" ? "light" : "dark";   // inverte il tema
+    document.documentElement.dataset.theme = nuovo;              // le variabili CSS cambiano subito
+    try { localStorage.setItem(CHIAVE_TEMA, nuovo); } catch (e) { /* nessun salvataggio possibile */ }
+    aggiornaPulsanteTema();                                      // aggiorna il testo del pulsante
+  });
+  aggiornaPulsanteTema();                                        // testo iniziale
+}
+
+// =====================================================================
+// SCHEDA DEL PEZZO: disegno tecnico schematico con la quota da misurare
+// (viewBox 140 × 90; la quota richiesta è in arancio con il simbolo "?")
+// =====================================================================
+const MATERIALE = { dado: "zinc", vite: "zinc", rond: "zinc", rondS: "zinc", bocc: "bronze", punta: "hss" };   // materiale di ogni pezzo (gli altri: acciaio)
+
+function iconaPezzo(id, u) {
+  const mat = MATERIALE[id] || "steel";                    // materiale del pezzo
+  const F = `fill="var(--mat-${mat})" stroke="var(--mat-edge)" stroke-width="1.2" stroke-linejoin="round"`;   // pieno con contorno
+  const S = `stroke="var(--mat-edge)" stroke-width="0.8" fill="none"`;          // linee sottili
+  const AX = `stroke="var(--mat-edge)" stroke-width="0.6" stroke-dasharray="8 2 1.5 2" fill="none"`;   // linea d'asse (tratto-punto)
+  const NA = `stroke="var(--mat-edge)" stroke-width="0.7" stroke-dasharray="3 2" fill="none"`;         // linee nascoste (tratteggio)
+  const VUOTO = `fill="var(--panel-2)" stroke="var(--mat-edge)" stroke-width="1.2"`;                    // fori e spazi vuoti
+  const TR = `fill="url(#${u}-hat)"`;                      // tratteggio delle sezioni
+  let h = `<defs>
+    <marker id="${u}-fr" viewBox="0 0 6 6" refX="6" refY="3" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 Z" fill="var(--cal-mark)"/></marker>
+    <pattern id="${u}-hat" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M 0 0 V 4" stroke="var(--mat-edge)" stroke-width="0.7"/></pattern>
+  </defs>`;
+  // Quota orizzontale da x1 a x2 alla quota y; ya, yb = inizio delle linee di richiamo (null = senza richiami)
+  const qH = (x1, x2, y, ya, yb) =>
+    (ya !== null ? `<path d="M ${x1} ${ya} V ${y + 3} M ${x2} ${yb} V ${y + 3}" stroke="var(--cal-mark)" stroke-width="0.7"/>` : "") +
+    `<path d="M ${x1} ${y} H ${x2}" stroke="var(--cal-mark)" stroke-width="1.2" marker-start="url(#${u}-fr)" marker-end="url(#${u}-fr)"/>` +
+    `<text x="${(x1 + x2) / 2}" y="${y - 2.5}" text-anchor="middle" font-size="10" font-weight="600" fill="var(--cal-mark)">?</text>`;
+  // Quota verticale da y1 a y2 all'ascissa x; xa = inizio delle linee di richiamo (null = senza richiami)
+  const qV = (y1, y2, x, xa) =>
+    (xa !== null ? `<path d="M ${xa} ${y1} H ${x + 3} M ${xa} ${y2} H ${x + 3}" stroke="var(--cal-mark)" stroke-width="0.7"/>` : "") +
+    `<path d="M ${x} ${y1} V ${y2}" stroke="var(--cal-mark)" stroke-width="1.2" marker-start="url(#${u}-fr)" marker-end="url(#${u}-fr)"/>` +
+    `<text x="${x + 4}" y="${(y1 + y2) / 2 + 3.5}" font-size="10" font-weight="600" fill="var(--cal-mark)">?</text>`;
+  // Vertici di un esagono con due facce verticali (centro cx, cy; raggio ai vertici r)
+  const esagono = (cx, cy, r) => [90, 150, 210, 270, 330, 30].map((a) =>
+    `${(cx + r * Math.cos(a * Math.PI / 180)).toFixed(2)},${(cy - r * Math.sin(a * Math.PI / 180)).toFixed(2)}`).join(" ");
+  // Cuscinetto visto di fronte: anello esterno, sfere, anello interno, foro
+  const cuscinetto = (cx, cy) => {
+    let c = `<circle cx="${cx}" cy="${cy}" r="30" ${F}/><circle cx="${cx}" cy="${cy}" r="24" ${VUOTO}/>`;   // anello esterno
+    for (let k = 0; k < 9; k++) {                          // 9 sfere sulla circonferenza primitiva
+      const a = k * 40 * Math.PI / 180;
+      c += `<circle cx="${(cx + 19.5 * Math.cos(a)).toFixed(2)}" cy="${(cy + 19.5 * Math.sin(a)).toFixed(2)}" r="4.2" ${F}/>`;
+    }
+    return c + `<circle cx="${cx}" cy="${cy}" r="15" ${F}/><circle cx="${cx}" cy="${cy}" r="10" ${VUOTO}/>`;   // anello interno e foro
+  };
+  // Alberino a tre gradini visto di lato
+  const alberino = () => `<rect x="12" y="31" width="24" height="18" ${F}/><rect x="36" y="25" width="52" height="30" ${F}/><rect x="88" y="29" width="40" height="22" ${F}/>` +
+    `<path d="M 6 40 H 134" ${AX}/>`;
+
+  switch (id) {
+    case "dado":                                           // dado: vista frontale, quota tra le facce
+      h += `<polygon points="${esagono(70, 38, 26.6)}" ${F}/><circle cx="70" cy="38" r="23" ${S}/>`;
+      h += `<circle cx="70" cy="38" r="11" ${VUOTO}/><path d="M 84 38 A 14 14 0 1 1 70 24" ${S}/>`;   // foro e filetto (3/4 di cerchio)
+      h += qH(47, 93, 82, 51.3, 51.3);
+      break;
+    case "perno":                                          // perno: vista laterale, quota sul diametro
+      h += `<path d="M 60 6 H 80 L 82 8 V 68 L 80 70 H 60 L 58 68 V 8 Z" ${F}/><path d="M 58 8 H 82 M 58 68 H 82" ${S}/><path d="M 70 2 V 74" ${AX}/>`;
+      h += qH(58, 82, 83, 70, 70);
+      break;
+    case "cuscD":                                          // cuscinetto: diametro esterno
+      h += cuscinetto(70, 37) + qH(40, 100, 82, 37, 37);
+      break;
+    case "cuscd":                                          // cuscinetto: diametro del foro
+      h += cuscinetto(70, 37) + qH(60, 80, 37, null, null);
+      break;
+    case "albD":                                           // alberino: diametro del gradino maggiore
+      h += alberino() + qV(25, 55, 62, null);
+      break;
+    case "albL":                                           // alberino: lunghezza totale
+      h += alberino() + qH(12, 128, 74, 49, 51);
+      break;
+    case "vite":                                           // vite: diametro del gambo
+      h += `<rect x="12" y="20" width="18" height="40" rx="1.5" ${F}/><path d="M 12 30 H 30 M 12 50 H 30" ${S}/>`;   // testa esagonale vista di lato
+      h += `<path d="M 30 31 H 120 L 122 33 V 47 L 120 49 H 30 Z" ${F}/>`;                                            // gambo
+      for (let x = 66; x <= 116; x += 5) h += `<path d="M ${x} 31 L ${x + 2.5} 49" ${S}/>`;                         // filetto
+      h += `<path d="M 66 33.5 H 121 M 66 46.5 H 121" stroke="var(--mat-edge)" stroke-width="0.5" fill="none"/>`;     // fondo del filetto
+      h += qV(31, 49, 128, 122);
+      break;
+    case "rond":                                           // rondella: diametro esterno
+      h += `<circle cx="70" cy="37" r="30" ${F}/><circle cx="70" cy="37" r="13" ${VUOTO}/>` + qH(40, 100, 82, 37, 37);
+      break;
+    case "rondS":                                          // rondella: spessore (vista laterale)
+      h += `<rect x="64" y="8" width="12" height="60" ${F}/><path d="M 64 25 H 76 M 64 51 H 76" ${NA}/><path d="M 58 38 H 82" ${AX}/>`;
+      h += qH(64, 76, 80, 68, 68);
+      break;
+    case "bocc":                                           // boccola: sezione, diametro interno
+      h += `<rect x="34" y="10" width="18" height="60" ${F}/><rect x="34" y="10" width="18" height="60" ${TR}/>`;
+      h += `<rect x="88" y="10" width="18" height="60" ${F}/><rect x="88" y="10" width="18" height="60" ${TR}/>`;
+      h += `<path d="M 52 10 H 88 M 52 70 H 88" ${S}/><path d="M 70 4 V 76" ${AX}/>` + qH(52, 88, 40, null, null);
+      break;
+    case "blocco": {                                       // blocchetto: sezione con foro cieco, profondità
+      const d = "M 20 14 H 58 V 52 H 82 V 14 H 124 V 72 H 20 Z";   // contorno con il foro aperto in alto
+      h += `<path d="${d}" ${F}/><path d="${d}" ${TR}/><path d="M 70 8 V 58" ${AX}/>` + qV(14, 52, 100, 82);
+      break;
+    }
+    case "sfera":                                          // sfera: diametro
+      h += `<circle cx="70" cy="37" r="28" ${F}/><ellipse cx="60" cy="27" rx="8" ry="5" fill="#ffffff" opacity=".45"/>` + qH(42, 98, 80, 37, 37);
+      break;
+    case "punta":                                          // punta elicoidale: diametro
+      h += `<rect x="10" y="31" width="46" height="18" ${F}/><path d="M 56 31 H 112 L 126 40 L 112 49 H 56 Z" ${F}/>`;   // codolo, corpo e cuspide
+      for (let x = 58; x < 108; x += 12) h += `<path d="M ${x} 31 Q ${x + 7} 40 ${x + 12} 49" ${S}/>`;                  // eliche
+      h += qV(31, 49, 84, null);
+      break;
+    case "lam":                                            // lamiera: spessore
+      h += `<rect x="64" y="8" width="12" height="60" ${F}/><rect x="64" y="8" width="12" height="60" ${TR}/>` + qH(64, 76, 80, 68, 68);
+      break;
+    case "cuscB":                                          // cuscinetto: larghezza (vista laterale)
+      h += `<rect x="52" y="6" width="36" height="66" rx="2" ${F}/><path d="M 52 15 H 88 M 52 63 H 88" ${S}/><path d="M 52 25 H 88 M 52 53 H 88" ${NA}/><path d="M 46 39 H 94" ${AX}/>`;
+      h += qH(52, 88, 83, 72, 72);
+      break;
+  }
+  return h;
+}
+
+// Codice HTML della scheda del pezzo
+function schedaPezzo(p, tipoMisura) {
+  return `<svg viewBox="0 0 140 90" role="img" aria-label="${p.nome}">${iconaPezzo(p.id, "ic")}</svg>` +
+    `<div class="pezzo-txt"><span class="label">Pezzo da misurare</span><b>${p.nome}</b>` +
+    `<span>Quota da rilevare: <b>${p.quota}</b></span>` +
+    (tipoMisura ? `<span>Misura ${tipoMisura}</span>` : "") +
+    `<span class="nota">Disegno schematico, non in scala. La quota in arancio è quella da leggere sullo strumento.</span></div>`;
+}
+
+// ---------- AVVIO DEL PROGRAMMA ----------
+initTema();                              // pulsante Chiaro/Scuro
+initStrumento();                         // disegni con le parti numerate
+initPrincipio();                         // meccanismo ed esempi
+initSimulatore();                        // comandi del simulatore
+initEsercizio();                         // prima domanda
+disegnaSimulatore();                     // primo disegno del simulatore
+window.addEventListener("hashchange", mostraVista);   // cambio di scheda
+mostraVista();                           // vista iniziale
+</script>
